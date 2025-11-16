@@ -1,3 +1,15 @@
+# Dependencies
 node_modules/
+
+# Build
+.next/
+out/
+dist/
+
+# System
+*.log
 *.exe
-".env.local" 
+
+# Environment files
+.env*
+!env.example
