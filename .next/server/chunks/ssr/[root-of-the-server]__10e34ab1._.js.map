@@ -1,0 +1,1 @@
+{"version":3,"sources":["turbopack:///[project]/app/deal/[id]/page.tsx"],"sourcesContent":["export default function DealPage() {\r\n  return <p>DealsWindfall internal page is disabled.</p>;\r\n}\r\n"],"names":[],"mappings":"qVAAe,SAAS,IACtB,MAAO,CAAA,EAAA,EAAA,GAAA,EAAC,IAAA,UAAE,4CACZ"}
