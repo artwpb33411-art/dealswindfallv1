@@ -112,6 +112,7 @@ function TopCategories({ onSelectCategory, selectedCategory }) {
     const categories = [
         "Electronics",
         "Clothing & Apparel",
+        "Kids & Toys",
         "Home & Kitchen",
         "Beauty & Personal Care",
         "Grocery & Food",
@@ -129,17 +130,17 @@ function TopCategories({ onSelectCategory, selectedCategory }) {
                     children: category
                 }, category, false, {
                     fileName: "[project]/components/TopCategories.tsx",
-                    lineNumber: 23,
+                    lineNumber: 24,
                     columnNumber: 11
                 }, this))
         }, void 0, false, {
             fileName: "[project]/components/TopCategories.tsx",
-            lineNumber: 21,
+            lineNumber: 22,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/components/TopCategories.tsx",
-        lineNumber: 20,
+        lineNumber: 21,
         columnNumber: 5
     }, this);
 }
@@ -545,7 +546,7 @@ __turbopack_context__.s([
     "default",
     ()=>track
 ]);
-async function track(event_type, deal_id = null) {
+async function track(event) {
     try {
         await fetch("/api/track", {
             method: "POST",
@@ -553,15 +554,15 @@ async function track(event_type, deal_id = null) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                event_type,
-                deal_id,
-                page: window.location.pathname,
-                referrer: document.referrer || null,
-                utm_source: new URLSearchParams(window.location.search).get("utm_source"),
-                utm_medium: new URLSearchParams(window.location.search).get("utm_medium"),
-                utm_campaign: new URLSearchParams(window.location.search).get("utm_campaign"),
-                user_agent: navigator.userAgent,
-                ip_address: null
+                event_type: event.event_type,
+                deal_id: event.deal_id ?? null,
+                page: event.page ?? window.location.pathname,
+                referrer: event.referrer ?? (document.referrer || null),
+                utm_source: event.utm_source ?? new URLSearchParams(window.location.search).get("utm_source"),
+                utm_medium: event.utm_medium ?? new URLSearchParams(window.location.search).get("utm_medium"),
+                utm_campaign: event.utm_campaign ?? new URLSearchParams(window.location.search).get("utm_campaign"),
+                user_agent: event.user_agent ?? navigator.userAgent,
+                ip_address: event.ip_address ?? null
             })
         });
     } catch (e) {

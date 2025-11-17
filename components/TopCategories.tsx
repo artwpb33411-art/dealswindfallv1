@@ -8,9 +8,10 @@ export default function TopCategories({
   const categories = [
     "Electronics",
     "Clothing & Apparel",
+	"Kids & Toys",
     "Home & Kitchen",
     "Beauty & Personal Care",
-    "Grocery & Food",
+	"Grocery & Food",
     "Appliances",
     "Health & Wellness",
     "Pet Supplies",

@@ -1126,10 +1126,6 @@
     background-color: var(--color-red-100);
   }
 
-  .bg-red-500 {
-    background-color: var(--color-red-500);
-  }
-
   .bg-red-600 {
     background-color: var(--color-red-600);
   }
@@ -1419,10 +1415,6 @@
 
   .text-white {
     color: var(--color-white);
-  }
-
-  .text-yellow-500 {
-    color: var(--color-yellow-500);
   }
 
   .text-yellow-600 {
