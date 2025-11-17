@@ -1,5 +1,12 @@
 {
+  "/admin/page": "app/admin/page.js",
+  "/api/admin/analytics/route": "app/api/admin/analytics/route.js",
+  "/api/contact/route": "app/api/contact/route.js",
+  "/api/deals/route": "app/api/deals/route.js",
   "/api/holiday-events/route": "app/api/holiday-events/route.js",
-  "/api/track/route": "app/api/track/route.js",
+  "/api/login/route": "app/api/login/route.js",
+  "/api/logout/route": "app/api/logout/route.js",
+  "/api/scrape/route": "app/api/scrape/route.js",
+  "/login/page": "app/login/page.js",
   "/page": "app/page.js"
 }

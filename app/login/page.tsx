@@ -2,26 +2,37 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
+    if (!captchaToken) {
+      setError("Please complete the captcha");
+      return;
+    }
+
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({
+        username,
+        password,
+        hcaptchaToken: captchaToken,
+      }),
     });
 
     if (res.ok) {
       router.push("/admin");
     } else {
-      setError("Invalid username or password");
+      setError("Invalid username, password, or captcha failed");
     }
   };
 
@@ -34,6 +45,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-semibold text-center text-blue-700 mb-6">
           Admin Login
         </h1>
+
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         <input
@@ -51,6 +63,15 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+
+        {/* hCaptcha React Component */}
+        <div className="my-4">
+          <HCaptcha
+            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY!}
+            onVerify={(token) => setCaptchaToken(token)}
+            onExpire={() => setCaptchaToken("")}
+          />
+        </div>
 
         <button
           type="submit"
