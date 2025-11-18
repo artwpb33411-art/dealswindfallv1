@@ -110,6 +110,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/api/auto-publish-settings/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/auto-publish-settings">> = Specific
+  const handler = {} as typeof import("../../app/api/auto-publish-settings/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/api/catalogs/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/catalogs">> = Specific
@@ -164,6 +173,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/api/fetch-title/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/fetch-title">> = Specific
+  const handler = {} as typeof import("../../app/api/fetch-title/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/api/holiday-events/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/holiday-events">> = Specific
@@ -186,6 +204,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/logout">> = Specific
   const handler = {} as typeof import("../../app/api/logout/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/publish-random/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/publish-random">> = Specific
+  const handler = {} as typeof import("../../app/api/publish-random/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

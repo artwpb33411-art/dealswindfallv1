@@ -81,6 +81,12 @@
       "namedRegex": "^/api/analytics/log(?:/)?$"
     },
     {
+      "page": "/api/auto-publish-settings",
+      "regex": "^/api/auto\\-publish\\-settings(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auto\\-publish\\-settings(?:/)?$"
+    },
+    {
       "page": "/api/catalogs",
       "regex": "^/api/catalogs(?:/)?$",
       "routeKeys": {},
@@ -111,6 +117,12 @@
       "namedRegex": "^/api/deals/bulk(?:/)?$"
     },
     {
+      "page": "/api/fetch-title",
+      "regex": "^/api/fetch\\-title(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/fetch\\-title(?:/)?$"
+    },
+    {
       "page": "/api/holiday-events",
       "regex": "^/api/holiday\\-events(?:/)?$",
       "routeKeys": {},
@@ -127,6 +139,12 @@
       "regex": "^/api/logout(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/logout(?:/)?$"
+    },
+    {
+      "page": "/api/publish-random",
+      "regex": "^/api/publish\\-random(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/publish\\-random(?:/)?$"
     },
     {
       "page": "/api/scrape",

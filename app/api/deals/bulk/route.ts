@@ -131,8 +131,10 @@ export async function POST(req: Request) {
       const urls = extractUrls(deals[i].notes || "");
 
       for (let u = 0; u < urls.length; u++) {
-        relatedLinksToInsert[idx].deal_id = deal.id;
-        delete relatedLinksToInsert[idx].deal_id_placeholder;
+       (relatedLinksToInsert[idx] as any).deal_id = deal.id;
+
+        delete (relatedLinksToInsert[idx] as any).deal_id_placeholder;
+
         idx++;
       }
     }

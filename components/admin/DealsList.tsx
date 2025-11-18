@@ -131,6 +131,11 @@ export default function DealsList() {
     }
   };
 
+
+const handleEdit = (deal: any) => {
+  setEditDeal(deal);
+  setIsModalOpen(true);
+};
   /* ---------------------------------------------------------
      EDIT DEAL (MODAL SAVE)
   --------------------------------------------------------- */
