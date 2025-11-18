@@ -412,6 +412,10 @@
 @layer components;
 
 @layer utilities {
+  .visible {
+    visibility: visible;
+  }
+
   .sr-only {
     clip-path: inset(50%);
     white-space: nowrap;
@@ -635,6 +639,10 @@
     display: inline-flex;
   }
 
+  .table {
+    display: table;
+  }
+
   .h-4 {
     height: calc(var(--spacing) * 4);
   }
@@ -691,6 +699,10 @@
     max-height: calc(var(--spacing) * 80);
   }
 
+  .max-h-\[90vh\] {
+    max-height: 90vh;
+  }
+
   .min-h-0 {
     min-height: calc(var(--spacing) * 0);
   }
@@ -725,6 +737,14 @@
 
   .w-20 {
     width: calc(var(--spacing) * 20);
+  }
+
+  .w-32 {
+    width: calc(var(--spacing) * 32);
+  }
+
+  .w-40 {
+    width: calc(var(--spacing) * 40);
   }
 
   .w-full {

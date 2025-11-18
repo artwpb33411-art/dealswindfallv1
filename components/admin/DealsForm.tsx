@@ -15,26 +15,24 @@ export default function DealsForm() {
     notes: "",
     expireDate: "",
     category: "",
-	holidayTag: "", 
-	
+    holidayTag: "",
   });
 
-const HOLIDAY_TAGS = [
-  "",
-  "Black Friday",
-  "Cyber Monday",
-  "Thanksgiving Week",
-  "Christmas & Holiday",
-  "New Year",
-  "Back to School",
-  "Prime Day",
-  "Memorial Day",
-  "Labor Day",
-  "Independence Day",
-  "Spring Sale",
-  "Clearance Event",
-];
-
+  const HOLIDAY_TAGS = [
+    "",
+    "Black Friday",
+    "Cyber Monday",
+    "Thanksgiving Week",
+    "Christmas & Holiday",
+    "New Year",
+    "Back to School",
+    "Prime Day",
+    "Memorial Day",
+    "Labor Day",
+    "Independence Day",
+    "Spring Sale",
+    "Clearance Event",
+  ];
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -44,7 +42,7 @@ const HOLIDAY_TAGS = [
   const onChange = (e: any) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // 🧠 Auto-fetch logic (Amazon/Walmart)
+  // 🧠 Auto-fetch logic (Amazon/Walmart/Target main product)
   const handleAutoFetch = async () => {
     if (!productUrl) return alert("Please paste a product link first.");
     setFetching(true);
@@ -60,7 +58,6 @@ const HOLIDAY_TAGS = [
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch product data");
 
-      // 🧩 Populate fields dynamically
       setForm((prev) => ({
         ...prev,
         description: data.title || prev.description,
@@ -92,10 +89,12 @@ const HOLIDAY_TAGS = [
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-		  expireDate: form.expireDate ? form.expireDate : null,
+          expireDate: form.expireDate ? form.expireDate : null,
           published_at: new Date().toISOString(),
+          // ⚠️ The backend will parse `notes` and create rows in deal_related_links
         }),
       });
+
       const data = await res.json();
       setSaving(false);
 
@@ -118,7 +117,7 @@ const HOLIDAY_TAGS = [
           notes: "",
           expireDate: "",
           category: "",
-		   holidayTag: "",
+          holidayTag: "",
         });
         setProductUrl("");
       }
@@ -143,7 +142,7 @@ const HOLIDAY_TAGS = [
       <div className="flex gap-2 items-center">
         <input
           type="url"
-          placeholder="Paste Amazon / Walmart product link..."
+          placeholder="Paste Amazon / Walmart / Target product link..."
           value={productUrl}
           onChange={(e) => setProductUrl(e.target.value)}
           className="border p-2 rounded flex-1"
@@ -160,7 +159,6 @@ const HOLIDAY_TAGS = [
         </button>
       </div>
 
-      {/* Existing Form Fields */}
       <input
         name="description"
         value={form.description}
@@ -168,6 +166,7 @@ const HOLIDAY_TAGS = [
         placeholder="Description"
         className="input"
       />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <input
           name="currentPrice"
@@ -227,13 +226,16 @@ const HOLIDAY_TAGS = [
         placeholder="Shipping Cost"
         className="input"
       />
+
+      {/* NOTES — admin can paste links here, backend will parse URLs */}
       <textarea
         name="notes"
         value={form.notes}
         onChange={onChange}
-        placeholder="Notes (bullet points)"
+        placeholder="Notes (plain text + links to similar deals)"
         className="input"
       />
+
       <input
         name="expireDate"
         value={form.expireDate}
@@ -248,19 +250,21 @@ const HOLIDAY_TAGS = [
         placeholder="Category"
         className="input"
       />
-{/* Holiday / Event Tag (optional) */}
-<select
-  name="holidayTag"
-  value={form.holidayTag}
-  onChange={onChange}
-  className="input"
->
-  {HOLIDAY_TAGS.map((tag) => (
-    <option key={tag} value={tag}>
-      {tag === "" ? "No holiday / event" : tag}
-    </option>
-  ))}
-</select>
+
+      {/* Holiday / Event Tag */}
+      <select
+        name="holidayTag"
+        value={form.holidayTag}
+        onChange={onChange}
+        className="input"
+      >
+        {HOLIDAY_TAGS.map((tag) => (
+          <option key={tag} value={tag}>
+            {tag === "" ? "No holiday / event" : tag}
+          </option>
+        ))}
+      </select>
+
       <button
         type="submit"
         disabled={saving}

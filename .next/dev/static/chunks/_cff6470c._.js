@@ -594,54 +594,66 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 const supabase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])(("TURBOPACK compile-time value", "https://kzcpmztlnlbwurcdycks.supabase.co"), ("TURBOPACK compile-time value", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6Y3BtenRsbmxid3VyY2R5Y2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNzI2MjAsImV4cCI6MjA3Nzk0ODYyMH0.n-6lRk97pcq__4pAMCscyr88i96kFhXB_gNUkrmOzZs"));
+const LIMIT = 20; // number of deals per batch
 function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDeals = false, onSelectDeal, searchQuery }) {
     _s();
     const [deals, setDeals] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
-    const [refreshing, setRefreshing] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [loadingMore, setLoadingMore] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [page, setPage] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
+    const [hasMore, setHasMore] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
     const containerRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const debouncedSearch = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$useDebounce$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])(searchQuery, 300);
-    // ----------------------------------------------------
-    // FETCH DEALS WITH FILTERS
-    // ----------------------------------------------------
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+    /* ======================================================
+     BUILD SUPABASE QUERY WITH FILTERS
+  ====================================================== */ const buildQuery = ()=>{
+        let query = supabase.from("deals").select("*").eq("status", "Published").order("published_at", {
+            ascending: false
+        });
+        if (selectedStore && selectedStore !== "Recent Deals") {
+            query = query.ilike("store_name", `%${selectedStore}%`);
+        }
+        if (selectedCategory) {
+            query = query.ilike("category", `%${selectedCategory}%`);
+        }
+        if (selectedHoliday) {
+            query = query.eq("holiday_tag", selectedHoliday.replace(/-/g, " ").replace(/\b\w/g, (c)=>c.toUpperCase()));
+        }
+        if (showHotDeals) {
+            query = query.gte("percent_diff", 30);
+        }
+        if (debouncedSearch) {
+            query = query.or(`description.ilike.%${debouncedSearch}%,store_name.ilike.%${debouncedSearch}%,category.ilike.%${debouncedSearch}%`);
+        }
+        return query;
+    };
+    /* ======================================================
+     FETCH FIRST PAGE (RESET WHEN FILTERS CHANGE)
+  ====================================================== */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "DealsList.useEffect": ()=>{
-            const fetchDeals = {
-                "DealsList.useEffect.fetchDeals": async ()=>{
+            const loadFirstPage = {
+                "DealsList.useEffect.loadFirstPage": async ()=>{
                     setLoading(true);
-                    let query = supabase.from("deals").select("*").eq("status", "Published").order("published_at", {
-                        ascending: false
-                    });
-                    // Store Filter
-                    if (selectedStore && selectedStore !== "Recent Deals") {
-                        query = query.ilike("store_name", `%${selectedStore}%`);
-                    }
-                    // Category Filter
-                    if (selectedCategory) {
-                        query = query.ilike("category", `%${selectedCategory}%`);
-                    }
-                    // Holiday Filter
-                    if (selectedHoliday) {
-                        query = query.eq("holiday_tag", selectedHoliday.replace(/-/g, " ").replace(/\b\w/g, {
-                            "DealsList.useEffect.fetchDeals": (c)=>c.toUpperCase()
-                        }["DealsList.useEffect.fetchDeals"]));
-                    }
-                    // Hot Deals Filter
-                    if (showHotDeals) {
-                        query = query.gte("percent_diff", 30);
-                    }
-                    // Search Filter
-                    if (debouncedSearch) {
-                        query = query.or(`description.ilike.%${debouncedSearch}%,store_name.ilike.%${debouncedSearch}%,category.ilike.%${debouncedSearch}%`);
-                    }
+                    setPage(0);
+                    setHasMore(true);
+                    const query = buildQuery().range(0, LIMIT - 1);
                     const { data, error } = await query;
-                    if (!error) {
-                        setDeals(data || []);
+                    if (error || !data) {
+                        setDeals([]);
+                    } else {
+                        // remove duplicates just in case
+                        const unique = data.filter({
+                            "DealsList.useEffect.loadFirstPage.unique": (item, index, arr)=>arr.findIndex({
+                                    "DealsList.useEffect.loadFirstPage.unique": (x)=>x.id === item.id
+                                }["DealsList.useEffect.loadFirstPage.unique"]) === index
+                        }["DealsList.useEffect.loadFirstPage.unique"]);
+                        setDeals(unique);
+                        setHasMore(data.length === LIMIT);
                     }
                     setLoading(false);
                 }
-            }["DealsList.useEffect.fetchDeals"];
-            fetchDeals();
+            }["DealsList.useEffect.loadFirstPage"];
+            loadFirstPage();
         }
     }["DealsList.useEffect"], [
         selectedStore,
@@ -650,68 +662,64 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
         showHotDeals,
         debouncedSearch
     ]);
-    // ----------------------------------------------------
-    // PULL-TO-REFRESH (mobile)
-    // ----------------------------------------------------
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+    /* ======================================================
+     LOAD MORE DEALS (INFINITE SCROLL)
+  ====================================================== */ const loadMore = async ()=>{
+        if (loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        const nextPage = page + 1;
+        const from = nextPage * LIMIT;
+        const to = from + LIMIT - 1;
+        const { data, error } = await buildQuery().range(from, to);
+        if (!error && data) {
+            setDeals((prev)=>{
+                const combined = [
+                    ...prev,
+                    ...data
+                ];
+                // Deduplicate by deal.id
+                const unique = combined.filter((item, index, arr)=>arr.findIndex((x)=>x.id === item.id) === index);
+                return unique;
+            });
+            setPage(nextPage);
+            setHasMore(data.length === LIMIT);
+        }
+        setLoadingMore(false);
+    };
+    /* ======================================================
+     SCROLL LISTENER
+  ====================================================== */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "DealsList.useEffect": ()=>{
             const div = containerRef.current;
             if (!div) return;
-            let startY = 0;
-            let pulling = false;
-            const start = {
-                "DealsList.useEffect.start": (e)=>{
-                    if (div.scrollTop === 0) {
-                        pulling = true;
-                        startY = e.touches[0].clientY;
+            const handleScroll = {
+                "DealsList.useEffect.handleScroll": ()=>{
+                    if (loading || loadingMore || !hasMore) return;
+                    const nearBottom = div.scrollTop + div.clientHeight >= div.scrollHeight - 200;
+                    if (nearBottom) {
+                        loadMore();
                     }
                 }
-            }["DealsList.useEffect.start"];
-            const move = {
-                "DealsList.useEffect.move": (e)=>{
-                    if (!pulling) return;
-                    const delta = e.touches[0].clientY - startY;
-                    if (delta > 70 && !refreshing) {
-                        setRefreshing(true);
-                        setTimeout({
-                            "DealsList.useEffect.move": ()=>setRefreshing(false)
-                        }["DealsList.useEffect.move"], 700);
-                        pulling = false;
-                    }
-                }
-            }["DealsList.useEffect.move"];
-            const end = {
-                "DealsList.useEffect.end": ()=>pulling = false
-            }["DealsList.useEffect.end"];
-            div.addEventListener("touchstart", start, {
-                passive: true
-            });
-            div.addEventListener("touchmove", move, {
-                passive: true
-            });
-            div.addEventListener("touchend", end, {
-                passive: true
-            });
+            }["DealsList.useEffect.handleScroll"];
+            div.addEventListener("scroll", handleScroll);
             return ({
-                "DealsList.useEffect": ()=>{
-                    div.removeEventListener("touchstart", start);
-                    div.removeEventListener("touchmove", move);
-                    div.removeEventListener("touchend", end);
-                }
+                "DealsList.useEffect": ()=>div.removeEventListener("scroll", handleScroll)
             })["DealsList.useEffect"];
         }
     }["DealsList.useEffect"], [
-        refreshing
+        loading,
+        loadingMore,
+        hasMore,
+        page
     ]);
-    // ----------------------------------------------------
-    // UI
-    // ----------------------------------------------------
-    if (loading) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+    /* ======================================================
+     UI
+  ====================================================== */ if (loading) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
         className: "text-center mt-10",
         children: "Loading deals..."
     }, void 0, false, {
         fileName: "[project]/components/DealsList.tsx",
-        lineNumber: 130,
+        lineNumber: 167,
         columnNumber: 23
     }, this);
     if (!deals.length) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -719,21 +727,13 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
         children: "No deals found."
     }, void 0, false, {
         fileName: "[project]/components/DealsList.tsx",
-        lineNumber: 131,
-        columnNumber: 29
+        lineNumber: 170,
+        columnNumber: 12
     }, this);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         ref: containerRef,
         className: "flex flex-col divide-y divide-gray-200 overflow-y-auto h-full custom-scroll",
         children: [
-            refreshing && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "text-center text-gray-500 text-sm py-2",
-                children: "Refreshing..."
-            }, void 0, false, {
-                fileName: "[project]/components/DealsList.tsx",
-                lineNumber: 139,
-                columnNumber: 9
-            }, this),
             deals.map((deal)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     onClick: ()=>{
                         (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$track$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])({
@@ -743,7 +743,7 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
                             user_agent: navigator.userAgent,
                             ip_address: null
                         });
-                        onSelectDeal(deal); // keep your UI behavior
+                        onSelectDeal(deal);
                     },
                     className: "flex items-center gap-4 p-3 h-32 hover:bg-gray-100 cursor-pointer transition",
                     children: [
@@ -755,19 +755,19 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
                                 className: "w-full h-full object-contain bg-white"
                             }, void 0, false, {
                                 fileName: "[project]/components/DealsList.tsx",
-                                lineNumber: 165,
+                                lineNumber: 195,
                                 columnNumber: 15
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex items-center justify-center h-full text-gray-400 text-xs",
                                 children: "No Image"
                             }, void 0, false, {
                                 fileName: "[project]/components/DealsList.tsx",
-                                lineNumber: 171,
+                                lineNumber: 201,
                                 columnNumber: 15
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/components/DealsList.tsx",
-                            lineNumber: 163,
+                            lineNumber: 193,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -778,7 +778,7 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
                                     children: deal.description
                                 }, void 0, false, {
                                     fileName: "[project]/components/DealsList.tsx",
-                                    lineNumber: 178,
+                                    lineNumber: 208,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -786,7 +786,7 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
                                     children: deal.store_name
                                 }, void 0, false, {
                                     fileName: "[project]/components/DealsList.tsx",
-                                    lineNumber: 181,
+                                    lineNumber: 211,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -800,7 +800,7 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/components/DealsList.tsx",
-                                            lineNumber: 185,
+                                            lineNumber: 217,
                                             columnNumber: 17
                                         }, this),
                                         deal.old_price && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -811,7 +811,7 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/components/DealsList.tsx",
-                                            lineNumber: 190,
+                                            lineNumber: 222,
                                             columnNumber: 17
                                         }, this),
                                         deal.percent_diff >= 70 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -819,31 +819,31 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
                                             children: "🔥🔥🔥"
                                         }, void 0, false, {
                                             fileName: "[project]/components/DealsList.tsx",
-                                            lineNumber: 198,
-                                            columnNumber: 9
+                                            lineNumber: 229,
+                                            columnNumber: 17
                                         }, this) : deal.percent_diff >= 60 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "text-orange-500 text-lg",
                                             children: "🔥🔥"
                                         }, void 0, false, {
                                             fileName: "[project]/components/DealsList.tsx",
-                                            lineNumber: 200,
-                                            columnNumber: 9
+                                            lineNumber: 231,
+                                            columnNumber: 17
                                         }, this) : deal.percent_diff >= 50 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "text-amber-500 text-lg",
                                             children: "🔥"
                                         }, void 0, false, {
                                             fileName: "[project]/components/DealsList.tsx",
-                                            lineNumber: 202,
-                                            columnNumber: 9
+                                            lineNumber: 233,
+                                            columnNumber: 17
                                         }, this) : deal.percent_diff >= 40 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "text-yellow-600 text-lg",
                                             children: "🌡️"
                                         }, void 0, false, {
                                             fileName: "[project]/components/DealsList.tsx",
-                                            lineNumber: 204,
-                                            columnNumber: 9
+                                            lineNumber: 235,
+                                            columnNumber: 17
                                         }, this) : null,
-                                        deal.percent_diff ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        deal.percent_diff && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "text-sm font-bold text-green-600",
                                             children: [
                                                 "-",
@@ -852,35 +852,43 @@ function DealsList({ selectedStore, selectedCategory, selectedHoliday, showHotDe
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/components/DealsList.tsx",
-                                            lineNumber: 209,
-                                            columnNumber: 9
-                                        }, this) : null
+                                            lineNumber: 239,
+                                            columnNumber: 17
+                                        }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/components/DealsList.tsx",
-                                    lineNumber: 183,
+                                    lineNumber: 215,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/DealsList.tsx",
-                            lineNumber: 177,
+                            lineNumber: 207,
                             columnNumber: 11
                         }, this)
                     ]
                 }, deal.id, true, {
                     fileName: "[project]/components/DealsList.tsx",
-                    lineNumber: 145,
+                    lineNumber: 178,
                     columnNumber: 9
-                }, this))
+                }, this)),
+            loadingMore && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "p-4 text-center text-gray-500",
+                children: "Loading more…"
+            }, void 0, false, {
+                fileName: "[project]/components/DealsList.tsx",
+                lineNumber: 249,
+                columnNumber: 9
+            }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/DealsList.tsx",
-        lineNumber: 134,
+        lineNumber: 173,
         columnNumber: 5
     }, this);
 }
-_s(DealsList, "FGhMRp5elUz6P2eS/n2S8DfvzQA=", false, function() {
+_s(DealsList, "3U7FiTNsE8bT7Jv7KuM2rOlG7vc=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$useDebounce$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
     ];
@@ -934,17 +942,22 @@ __turbopack_context__.s([
     "default",
     ()=>DealDetail
 ]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$Disclaimer$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/Disclaimer.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/@supabase/supabase-js/dist/module/index.js [app-client] (ecmascript) <locals>");
 ;
 var _s = __turbopack_context__.k.signature();
 "use client";
 ;
 ;
+;
+const supabase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])(("TURBOPACK compile-time value", "https://kzcpmztlnlbwurcdycks.supabase.co"), ("TURBOPACK compile-time value", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6Y3BtenRsbmxid3VyY2R5Y2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNzI2MjAsImV4cCI6MjA3Nzk0ODYyMH0.n-6lRk97pcq__4pAMCscyr88i96kFhXB_gNUkrmOzZs"));
 function DealDetail({ deal }) {
     _s();
     const [copied, setCopied] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [relatedLinks, setRelatedLinks] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     const handleCopy = async (text)=>{
         try {
             if (navigator?.clipboard?.writeText) {
@@ -965,13 +978,37 @@ function DealDetail({ deal }) {
             alert("Couldn’t copy. Please copy manually.");
         }
     };
+    // 🔁 Load related links from DB (once per deal)
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "DealDetail.useEffect": ()=>{
+            const fetchRelated = {
+                "DealDetail.useEffect.fetchRelated": async ()=>{
+                    if (!deal?.id) {
+                        setRelatedLinks([]);
+                        return;
+                    }
+                    const { data, error } = await supabase.from("deal_related_links").select("id, url, title").eq("deal_id", deal.id).order("id", {
+                        ascending: true
+                    });
+                    if (!error && data) {
+                        setRelatedLinks(data);
+                    } else {
+                        console.error("Error loading related links:", error);
+                    }
+                }
+            }["DealDetail.useEffect.fetchRelated"];
+            fetchRelated();
+        }
+    }["DealDetail.useEffect"], [
+        deal?.id
+    ]);
     if (!deal) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "flex items-center justify-center h-full text-gray-400",
             children: "Select a deal to view details"
         }, void 0, false, {
             fileName: "[project]/components/DealDetail.tsx",
-            lineNumber: 32,
+            lineNumber: 63,
             columnNumber: 7
         }, this);
     }
@@ -985,7 +1022,7 @@ function DealDetail({ deal }) {
                     children: deal.deal_level
                 }, void 0, false, {
                     fileName: "[project]/components/DealDetail.tsx",
-                    lineNumber: 47,
+                    lineNumber: 74,
                     columnNumber: 11
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -993,7 +1030,7 @@ function DealDetail({ deal }) {
                     children: deal.description || "Untitled Deal"
                 }, void 0, false, {
                     fileName: "[project]/components/DealDetail.tsx",
-                    lineNumber: 62,
+                    lineNumber: 91,
                     columnNumber: 9
                 }, this),
                 deal.image_link && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1004,12 +1041,12 @@ function DealDetail({ deal }) {
                         className: "max-h-80 object-contain rounded-lg shadow-sm border"
                     }, void 0, false, {
                         fileName: "[project]/components/DealDetail.tsx",
-                        lineNumber: 68,
+                        lineNumber: 97,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/components/DealDetail.tsx",
-                    lineNumber: 67,
+                    lineNumber: 96,
                     columnNumber: 11
                 }, this),
                 deal.product_link && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
@@ -1020,7 +1057,7 @@ function DealDetail({ deal }) {
                     children: "View Deal"
                 }, void 0, false, {
                     fileName: "[project]/components/DealDetail.tsx",
-                    lineNumber: 77,
+                    lineNumber: 106,
                     columnNumber: 11
                 }, this),
                 deal.coupon_code && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1031,7 +1068,7 @@ function DealDetail({ deal }) {
                             children: "Coupon Code:"
                         }, void 0, false, {
                             fileName: "[project]/components/DealDetail.tsx",
-                            lineNumber: 89,
+                            lineNumber: 118,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1042,7 +1079,7 @@ function DealDetail({ deal }) {
                                     children: deal.coupon_code
                                 }, void 0, false, {
                                     fileName: "[project]/components/DealDetail.tsx",
-                                    lineNumber: 91,
+                                    lineNumber: 120,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1051,19 +1088,19 @@ function DealDetail({ deal }) {
                                     children: copied ? "Copied!" : "Copy"
                                 }, void 0, false, {
                                     fileName: "[project]/components/DealDetail.tsx",
-                                    lineNumber: 94,
+                                    lineNumber: 123,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/DealDetail.tsx",
-                            lineNumber: 90,
+                            lineNumber: 119,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/DealDetail.tsx",
-                    lineNumber: 88,
+                    lineNumber: 117,
                     columnNumber: 11
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1077,8 +1114,8 @@ function DealDetail({ deal }) {
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/DealDetail.tsx",
-                            lineNumber: 111,
-                            columnNumber: 11
+                            lineNumber: 140,
+                            columnNumber: 13
                         }, this),
                         typeof deal.old_price === "number" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: "text-xl text-gray-400 line-through",
@@ -1088,8 +1125,8 @@ function DealDetail({ deal }) {
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/DealDetail.tsx",
-                            lineNumber: 116,
-                            columnNumber: 11
+                            lineNumber: 145,
+                            columnNumber: 13
                         }, this),
                         typeof deal.percent_diff === "number" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: "text-sm text-red-600 font-semibold",
@@ -1100,14 +1137,14 @@ function DealDetail({ deal }) {
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/DealDetail.tsx",
-                            lineNumber: 121,
-                            columnNumber: 11
+                            lineNumber: 150,
+                            columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/DealDetail.tsx",
-                    lineNumber: 109,
-                    columnNumber: 7
+                    lineNumber: 138,
+                    columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "text-sm text-gray-500 mb-8 space-y-1",
@@ -1119,8 +1156,8 @@ function DealDetail({ deal }) {
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/DealDetail.tsx",
-                            lineNumber: 128,
-                            columnNumber: 29
+                            lineNumber: 158,
+                            columnNumber: 31
                         }, this),
                         deal.category && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                             children: [
@@ -1129,8 +1166,8 @@ function DealDetail({ deal }) {
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/DealDetail.tsx",
-                            lineNumber: 129,
-                            columnNumber: 27
+                            lineNumber: 159,
+                            columnNumber: 29
                         }, this),
                         deal.expire_date && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                             children: [
@@ -1141,14 +1178,14 @@ function DealDetail({ deal }) {
                                     children: new Date(deal.expire_date).toLocaleDateString()
                                 }, void 0, false, {
                                     fileName: "[project]/components/DealDetail.tsx",
-                                    lineNumber: 133,
-                                    columnNumber: 13
+                                    lineNumber: 163,
+                                    columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/DealDetail.tsx",
-                            lineNumber: 131,
-                            columnNumber: 11
+                            lineNumber: 161,
+                            columnNumber: 13
                         }, this),
                         deal.published_at && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                             children: [
@@ -1159,47 +1196,88 @@ function DealDetail({ deal }) {
                                     children: new Date(deal.published_at).toLocaleDateString()
                                 }, void 0, false, {
                                     fileName: "[project]/components/DealDetail.tsx",
-                                    lineNumber: 141,
-                                    columnNumber: 13
+                                    lineNumber: 171,
+                                    columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/DealDetail.tsx",
-                            lineNumber: 139,
-                            columnNumber: 11
+                            lineNumber: 169,
+                            columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/DealDetail.tsx",
-                    lineNumber: 127,
-                    columnNumber: 7
+                    lineNumber: 157,
+                    columnNumber: 9
                 }, this),
-                deal.notes && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                deal.notes && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "text-gray-700 mb-6 whitespace-pre-line",
-                    children: deal.notes
+                    children: deal.notes.replace(/https?:\/\/[^\s]+/g, "").trim()
                 }, void 0, false, {
                     fileName: "[project]/components/DealDetail.tsx",
-                    lineNumber: 149,
-                    columnNumber: 9
+                    lineNumber: 180,
+                    columnNumber: 11
+                }, this),
+                relatedLinks.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "mt-4 p-4 bg-gray-50 border rounded-lg",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                            className: "font-semibold text-lg mb-3",
+                            children: "Other Related Deals"
+                        }, void 0, false, {
+                            fileName: "[project]/components/DealDetail.tsx",
+                            lineNumber: 188,
+                            columnNumber: 13
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("ul", {
+                            className: "space-y-2",
+                            children: relatedLinks.map((item)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("li", {
+                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
+                                        href: item.url,
+                                        target: "_blank",
+                                        rel: "noopener noreferrer",
+                                        className: "text-blue-600 hover:text-blue-800 underline",
+                                        children: item.title || item.url
+                                    }, void 0, false, {
+                                        fileName: "[project]/components/DealDetail.tsx",
+                                        lineNumber: 194,
+                                        columnNumber: 19
+                                    }, this)
+                                }, item.id, false, {
+                                    fileName: "[project]/components/DealDetail.tsx",
+                                    lineNumber: 193,
+                                    columnNumber: 17
+                                }, this))
+                        }, void 0, false, {
+                            fileName: "[project]/components/DealDetail.tsx",
+                            lineNumber: 191,
+                            columnNumber: 13
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/components/DealDetail.tsx",
+                    lineNumber: 187,
+                    columnNumber: 11
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$Disclaimer$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                     fileName: "[project]/components/DealDetail.tsx",
-                    lineNumber: 157,
+                    lineNumber: 208,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/components/DealDetail.tsx",
-            lineNumber: 42,
+            lineNumber: 71,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/components/DealDetail.tsx",
-        lineNumber: 39,
+        lineNumber: 70,
         columnNumber: 5
     }, this);
 }
-_s(DealDetail, "NE86rL3vg4NVcTTWDavsT0hUBJs=");
+_s(DealDetail, "0R37khmwuY6cB3cTX0mJqSN+Upk=");
 _c = DealDetail;
 var _c;
 __turbopack_context__.k.register(_c, "DealDetail");

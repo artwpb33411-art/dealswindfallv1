@@ -10,6 +10,7 @@ import CouponList from "@/components/admin/CouponList";
 import BulkUploadDeals from "@/components/admin/BulkUploadDeals";
 import SeasonalEventsManager from "@/components/admin/SeasonalEventsManager";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
+import AutoPublishSettings from "@/components/admin/AutoPublishSettings";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("deals");
@@ -44,6 +45,8 @@ export default function AdminPage() {
           { id: "coupons", label: "🎟️ Coupons" },
 		     { id: "events", label: "📅 Seasonal Events" }, // ✅ new
 			  { id: "analytics", label: "📊 Analytics" }, // ✅ new
+			  { id: "settings", label: "⚙️ Settings" }
+
         ].map((tab) => (
           <button
             key={tab.id}
@@ -100,6 +103,15 @@ export default function AdminPage() {
           <AdminAnalytics />
         </div>
       )}
+	  
+	  
+	  {activeTab === "settings" && (
+        <div>
+          <AutoPublishSettings />
+        </div>
+      )}
+	  
+	  
       </div>
   );
 }

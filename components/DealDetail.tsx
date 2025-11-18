@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Disclaimer from "@/components/Disclaimer";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function DealDetail({ deal }: { deal: any }) {
   const [copied, setCopied] = useState(false);
+  const [relatedLinks, setRelatedLinks] = useState<any[]>([]);
 
   const handleCopy = async (text: string) => {
     try {
@@ -27,6 +34,30 @@ export default function DealDetail({ deal }: { deal: any }) {
     }
   };
 
+  // 🔁 Load related links from DB (once per deal)
+  useEffect(() => {
+    const fetchRelated = async () => {
+      if (!deal?.id) {
+        setRelatedLinks([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("deal_related_links")
+        .select("id, url, title")
+        .eq("deal_id", deal.id)
+        .order("id", { ascending: true });
+
+      if (!error && data) {
+        setRelatedLinks(data);
+      } else {
+        console.error("Error loading related links:", error);
+      }
+    };
+
+    fetchRelated();
+  }, [deal?.id]);
+
   if (!deal) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
@@ -37,24 +68,22 @@ export default function DealDetail({ deal }: { deal: any }) {
 
   return (
     <div className="flex flex-col min-h-0 overflow-hidden bg-white">
-      
-      {/* Scrollable body */}
       <div className="overflow-y-auto flex-1 p-6 pb-28 custom-scroll">
-
-        {/* Badges, Title, etc... everything inside here remains unchanged */}
-
+        {/* Heat/level badge */}
         {deal.deal_level && (
-          <div className={`self-start mb-4 px-3 py-1 rounded-full text-white text-sm font-medium ${
-            deal.deal_level.includes("Flaming")
-              ? "bg-red-600"
-              : deal.deal_level.includes("Searing")
-              ? "bg-orange-500"
-              : deal.deal_level.includes("Scorching")
-              ? "bg-amber-500"
-              : deal.deal_level.includes("Blistering")
-              ? "bg-yellow-500 text-gray-900"
-              : "bg-gray-400"
-          }`}>
+          <div
+            className={`self-start mb-4 px-3 py-1 rounded-full text-white text-sm font-medium ${
+              deal.deal_level.includes("Flaming")
+                ? "bg-red-600"
+                : deal.deal_level.includes("Searing")
+                ? "bg-orange-500"
+                : deal.deal_level.includes("Scorching")
+                ? "bg-amber-500"
+                : deal.deal_level.includes("Blistering")
+                ? "bg-yellow-500 text-gray-900"
+                : "bg-gray-400"
+            }`}
+          >
             {deal.deal_level}
           </div>
         )}
@@ -104,58 +133,79 @@ export default function DealDetail({ deal }: { deal: any }) {
             </div>
           </div>
         )}
-		
-		{/* 💰 Pricing Info */}
-      <div className="flex flex-wrap items-center gap-4 mb-6">
-        {typeof deal.current_price === "number" && (
-          <span className="text-3xl font-bold text-green-600">
-            ${deal.current_price.toFixed(2)}
-          </span>
-        )}
-        {typeof deal.old_price === "number" && (
-          <span className="text-xl text-gray-400 line-through">
-            ${deal.old_price.toFixed(2)}
-          </span>
-        )}
-        {typeof deal.percent_diff === "number" && (
-          <span className="text-sm text-red-600 font-semibold">
-            (-{deal.percent_diff.toFixed(0)}%)
-          </span>
-        )}
-      </div>
-      {/* 📅 Additional Info */}
-      <div className="text-sm text-gray-500 mb-8 space-y-1">
-        {deal.store_name && <p>Store: {deal.store_name}</p>}
-        {deal.category && <p>Category: {deal.category}</p>}
-        {deal.expire_date && (
-          <p>
-            Expires on:{" "}
-            <span className="font-medium">
-              {new Date(deal.expire_date).toLocaleDateString()}
-            </span>
-          </p>
-        )}
-        {deal.published_at && (
-          <p>
-            Added:{" "}
-            <span className="font-medium">
-              {new Date(deal.published_at).toLocaleDateString()}
-            </span>
-          </p>
-        )}
-      </div>
-      {/* 📝 Detailed Description */}
-      {deal.notes && (
-        <p className="text-gray-700 mb-6 whitespace-pre-line">
-          {deal.notes}
-        </p>
-      )}
 
+        {/* Pricing */}
+        <div className="flex flex-wrap items-center gap-4 mb-6">
+          {typeof deal.current_price === "number" && (
+            <span className="text-3xl font-bold text-green-600">
+              ${deal.current_price.toFixed(2)}
+            </span>
+          )}
+          {typeof deal.old_price === "number" && (
+            <span className="text-xl text-gray-400 line-through">
+              ${deal.old_price.toFixed(2)}
+            </span>
+          )}
+          {typeof deal.percent_diff === "number" && (
+            <span className="text-sm text-red-600 font-semibold">
+              (-{deal.percent_diff.toFixed(0)}%)
+            </span>
+          )}
+        </div>
 
-        {/* Pricing, details, notes — unchanged */}
-        
+        {/* Additional Info */}
+        <div className="text-sm text-gray-500 mb-8 space-y-1">
+          {deal.store_name && <p>Store: {deal.store_name}</p>}
+          {deal.category && <p>Category: {deal.category}</p>}
+          {deal.expire_date && (
+            <p>
+              Expires on:{" "}
+              <span className="font-medium">
+                {new Date(deal.expire_date).toLocaleDateString()}
+              </span>
+            </p>
+          )}
+          {deal.published_at && (
+            <p>
+              Added:{" "}
+              <span className="font-medium">
+                {new Date(deal.published_at).toLocaleDateString()}
+              </span>
+            </p>
+          )}
+        </div>
+
+        {/* Notes (without raw URLs) */}
+        {deal.notes && (
+          <div className="text-gray-700 mb-6 whitespace-pre-line">
+            {deal.notes.replace(/https?:\/\/[^\s]+/g, "").trim()}
+          </div>
+        )}
+
+        {/* Other Related Deals (from DB, no scraping now) */}
+        {relatedLinks.length > 0 && (
+          <div className="mt-4 p-4 bg-gray-50 border rounded-lg">
+            <h3 className="font-semibold text-lg mb-3">
+              Other Related Deals
+            </h3>
+            <ul className="space-y-2">
+              {relatedLinks.map((item) => (
+                <li key={item.id}>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {item.title || item.url}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <Disclaimer />
-
       </div>
     </div>
   );

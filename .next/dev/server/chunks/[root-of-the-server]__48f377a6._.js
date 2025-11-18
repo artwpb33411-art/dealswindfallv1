@@ -73,41 +73,84 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$serv
 var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseAdmin$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/supabaseAdmin.ts [app-route] (ecmascript)");
 ;
 ;
+/* -------------------------------------------------------------------------- */ /* 🔧 Helpers                                                                  */ /* -------------------------------------------------------------------------- */ // Extract URLs from notes
+function extractUrls(text) {
+    return text?.match(/https?:\/\/[^\s]+/g) || [];
+}
+// Get base URL (VERY IMPORTANT!)
+function getBaseUrl() {
+    return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL || "http://localhost:3000";
+}
+// Fetch title from internal route (safe server version)
+async function getTitle(url) {
+    try {
+        const base = getBaseUrl();
+        const res = await fetch(`${base}/api/fetch-title`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                url
+            })
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.title || null;
+    } catch (err) {
+        console.error("❌ getTitle failed:", err);
+        return null;
+    }
+}
 async function POST(req) {
     try {
         const body = await req.json();
+        // Parse prices
         const oldP = parseFloat(body.old_price || body.oldPrice || 0);
         const currP = parseFloat(body.current_price || body.currentPrice || 0);
         const priceDiff = oldP && currP ? oldP - currP : 0;
         const percentDiff = oldP ? Number((priceDiff / oldP * 100).toFixed(2)) : 0;
+        // Determine deal heat level
         let dealLevel = "";
         if (percentDiff >= 40 && percentDiff < 51) dealLevel = "Blistering deal";
         else if (percentDiff >= 51 && percentDiff < 61) dealLevel = "Scorching deal";
         else if (percentDiff >= 61 && percentDiff < 71) dealLevel = "Searing deal";
         else if (percentDiff >= 71) dealLevel = "Flaming deal";
-        const { data, error } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseAdmin$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabaseAdmin"].from("deals").insert({
-            description: body.description ?? "",
+        /* --------------------------------------------- */ /* STEP 1 — Save the MAIN DEAL                  */ /* --------------------------------------------- */ const { data: deal, error } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseAdmin$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabaseAdmin"].from("deals").insert({
+            description: body.description || "",
             current_price: currP || null,
             old_price: oldP || null,
             price_diff: priceDiff || null,
             percent_diff: percentDiff || null,
-            image_link: body.imageLink ?? null,
-            product_link: body.productLink ?? null,
-            review_link: body.reviewLink ?? null,
-            coupon_code: body.couponCode ?? null,
+            image_link: body.imageLink || null,
+            product_link: body.productLink || null,
+            review_link: body.reviewLink || null,
+            coupon_code: body.couponCode || null,
             shipping_cost: body.shippingCost ? Number(body.shippingCost) : null,
-            notes: body.notes ?? null,
-            expire_date: body.expireDate ?? null,
-            category: body.category ?? null,
-            store_name: body.storeName ?? null,
+            notes: body.notes || null,
+            expire_date: body.expireDate || null,
+            category: body.category || null,
+            store_name: body.storeName || null,
             deal_level: dealLevel,
-            holiday_tag: body.holidayTag ?? null,
+            holiday_tag: body.holidayTag || null,
             published_at: new Date().toISOString()
         }).select().single();
         if (error) throw error;
+        /* --------------------------------------------- */ /* STEP 2 — Extract URLs from notes             */ /* --------------------------------------------- */ const urls = extractUrls(body.notes || "");
+        if (urls.length > 0) {
+            // Fetch all titles in parallel (MUCH faster)
+            const titleResults = await Promise.all(urls.map((u)=>getTitle(u)));
+            const rows = urls.map((url, i)=>({
+                    deal_id: deal.id,
+                    url,
+                    title: titleResults[i] || null
+                }));
+            /* -------------------------------------------- */ /* STEP 3 — Insert related links               */ /* -------------------------------------------- */ const { error: relErr } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseAdmin$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabaseAdmin"].from("deal_related_links").insert(rows);
+            if (relErr) console.error("❌ Related links insert failed:", relErr);
+        }
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             ok: true,
-            deal: data
+            deal
         }, {
             status: 201
         });
@@ -126,7 +169,7 @@ async function GET() {
             ascending: false
         });
         if (error) throw error;
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json(data, {
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json(data || [], {
             status: 200
         });
     } catch (e) {
@@ -141,13 +184,31 @@ async function GET() {
 async function PUT(req) {
     try {
         const body = await req.json();
-        const { id, ...fields } = body;
+        const { id, ...updateFields } = body;
         if (!id) throw new Error("Missing deal ID for update.");
-        const { data, error } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseAdmin$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabaseAdmin"].from("deals").update(fields).eq("id", id).select().single();
+        // Recalculate discount if prices provided
+        const oldP = parseFloat(updateFields.old_price || 0);
+        const currP = parseFloat(updateFields.current_price || 0);
+        if (!isNaN(oldP) && !isNaN(currP) && oldP > 0 && currP > 0) {
+            const priceDiff = oldP - currP;
+            const percentDiff = Number((priceDiff / oldP * 100).toFixed(2));
+            let dealLevel = "";
+            if (percentDiff >= 40 && percentDiff < 51) dealLevel = "Blistering deal";
+            else if (percentDiff >= 51 && percentDiff < 61) dealLevel = "Scorching deal";
+            else if (percentDiff >= 61 && percentDiff < 71) dealLevel = "Searing deal";
+            else if (percentDiff >= 71) dealLevel = "Flaming deal";
+            updateFields.price_diff = priceDiff;
+            updateFields.percent_diff = percentDiff;
+            updateFields.deal_level = dealLevel;
+        }
+        // Update in Supabase
+        const { data, error } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseAdmin$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabaseAdmin"].from("deals").update(updateFields).eq("id", id).select().single();
         if (error) throw error;
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             ok: true,
             updated: data
+        }, {
+            status: 200
         });
     } catch (e) {
         console.error("PUT /deals error:", e);
@@ -161,17 +222,31 @@ async function PUT(req) {
 async function DELETE(req) {
     try {
         const { id } = await req.json();
-        if (!id) throw new Error("Missing deal ID for delete.");
-        const { error } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseAdmin$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabaseAdmin"].from("deals").delete().eq("id", id);
-        if (error) throw error;
+        if (!id) throw new Error("Missing deal ID");
+        console.log("🗑 Deleting related links for deal:", id);
+        // 1️⃣ Delete related links first (safe even if cascade exists)
+        const relDelete = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseAdmin$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabaseAdmin"].from("deal_related_links").delete().eq("deal_id", id);
+        if (relDelete.error) {
+            console.error("❌ Failed deleting related links:", relDelete.error);
+            throw relDelete.error;
+        }
+        console.log("🗑 Deleting deal:", id);
+        // 2️⃣ Now delete the deal
+        const dealDelete = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseAdmin$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabaseAdmin"].from("deals").delete().eq("id", id);
+        if (dealDelete.error) {
+            console.error("❌ Failed deleting deal:", dealDelete.error);
+            throw dealDelete.error;
+        }
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             ok: true,
             message: "Deal deleted"
+        }, {
+            status: 200
         });
-    } catch (e) {
-        console.error("DELETE /deals error:", e);
+    } catch (err) {
+        console.error("🔥 DELETE /deals crashed:", err);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-            error: e.message || "Unknown error"
+            error: err.message || "Unknown delete error"
         }, {
             status: 500
         });

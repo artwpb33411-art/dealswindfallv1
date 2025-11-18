@@ -50,7 +50,7 @@ function DealsForm() {
             ...form,
             [e.target.name]: e.target.value
         });
-    // 🧠 Auto-fetch logic (Amazon/Walmart)
+    // 🧠 Auto-fetch logic (Amazon/Walmart/Target main product)
     const handleAutoFetch = async ()=>{
         if (!productUrl) return alert("Please paste a product link first.");
         setFetching(true);
@@ -67,7 +67,6 @@ function DealsForm() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Failed to fetch product data");
-            // 🧩 Populate fields dynamically
             setForm((prev)=>({
                     ...prev,
                     description: data.title || prev.description,
@@ -141,7 +140,7 @@ function DealsForm() {
                 children: "Add New Deal"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 137,
+                lineNumber: 136,
                 columnNumber: 7
             }, this),
             msg && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -149,7 +148,7 @@ function DealsForm() {
                 children: msg
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 140,
+                lineNumber: 139,
                 columnNumber: 15
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -157,13 +156,13 @@ function DealsForm() {
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                         type: "url",
-                        placeholder: "Paste Amazon / Walmart product link...",
+                        placeholder: "Paste Amazon / Walmart / Target product link...",
                         value: productUrl,
                         onChange: (e)=>setProductUrl(e.target.value),
                         className: "border p-2 rounded flex-1"
                     }, void 0, false, {
                         fileName: "[project]/components/admin/DealsForm.tsx",
-                        lineNumber: 144,
+                        lineNumber: 143,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -174,13 +173,13 @@ function DealsForm() {
                         children: fetching ? "Fetching..." : "Fetch"
                     }, void 0, false, {
                         fileName: "[project]/components/admin/DealsForm.tsx",
-                        lineNumber: 151,
+                        lineNumber: 150,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 143,
+                lineNumber: 142,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -191,7 +190,7 @@ function DealsForm() {
                 className: "input"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 164,
+                lineNumber: 162,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -205,7 +204,7 @@ function DealsForm() {
                         className: "input"
                     }, void 0, false, {
                         fileName: "[project]/components/admin/DealsForm.tsx",
-                        lineNumber: 172,
+                        lineNumber: 171,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -216,7 +215,7 @@ function DealsForm() {
                         className: "input"
                     }, void 0, false, {
                         fileName: "[project]/components/admin/DealsForm.tsx",
-                        lineNumber: 179,
+                        lineNumber: 178,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -227,13 +226,13 @@ function DealsForm() {
                         className: "input"
                     }, void 0, false, {
                         fileName: "[project]/components/admin/DealsForm.tsx",
-                        lineNumber: 186,
+                        lineNumber: 185,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 171,
+                lineNumber: 170,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -244,7 +243,7 @@ function DealsForm() {
                 className: "input"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 195,
+                lineNumber: 194,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -255,7 +254,7 @@ function DealsForm() {
                 className: "input"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 202,
+                lineNumber: 201,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -266,7 +265,7 @@ function DealsForm() {
                 className: "input"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 209,
+                lineNumber: 208,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -277,7 +276,7 @@ function DealsForm() {
                 className: "input"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 216,
+                lineNumber: 215,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -288,18 +287,18 @@ function DealsForm() {
                 className: "input"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 223,
+                lineNumber: 222,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
                 name: "notes",
                 value: form.notes,
                 onChange: onChange,
-                placeholder: "Notes (bullet points)",
+                placeholder: "Notes (plain text + links to similar deals)",
                 className: "input"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 230,
+                lineNumber: 231,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -310,7 +309,7 @@ function DealsForm() {
                 className: "input"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 237,
+                lineNumber: 239,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -321,7 +320,7 @@ function DealsForm() {
                 className: "input"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 244,
+                lineNumber: 246,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -334,13 +333,13 @@ function DealsForm() {
                         children: tag === "" ? "No holiday / event" : tag
                     }, tag, false, {
                         fileName: "[project]/components/admin/DealsForm.tsx",
-                        lineNumber: 259,
-                        columnNumber: 5
+                        lineNumber: 262,
+                        columnNumber: 11
                     }, this))
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 252,
-                columnNumber: 1
+                lineNumber: 255,
+                columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                 type: "submit",
@@ -349,13 +348,13 @@ function DealsForm() {
                 children: saving ? "Saving..." : "Save Deal"
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsForm.tsx",
-                lineNumber: 264,
+                lineNumber: 268,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/admin/DealsForm.tsx",
-        lineNumber: 133,
+        lineNumber: 132,
         columnNumber: 5
     }, this);
 }
@@ -1392,12 +1391,12 @@ function DealsList() {
                                             children: "No deals found"
                                         }, void 0, false, {
                                             fileName: "[project]/components/admin/DealsList.tsx",
-                                            lineNumber: 370,
+                                            lineNumber: 371,
                                             columnNumber: 11
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/components/admin/DealsList.tsx",
-                                        lineNumber: 369,
+                                        lineNumber: 370,
                                         columnNumber: 9
                                     }, this)
                                 }, void 0, false, {
@@ -1433,7 +1432,7 @@ function DealsList() {
                         children: "Previous"
                     }, void 0, false, {
                         fileName: "[project]/components/admin/DealsList.tsx",
-                        lineNumber: 384,
+                        lineNumber: 385,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1446,7 +1445,7 @@ function DealsList() {
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/admin/DealsList.tsx",
-                        lineNumber: 396,
+                        lineNumber: 397,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1456,26 +1455,26 @@ function DealsList() {
                         children: "Next"
                     }, void 0, false, {
                         fileName: "[project]/components/admin/DealsList.tsx",
-                        lineNumber: 400,
+                        lineNumber: 401,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/admin/DealsList.tsx",
-                lineNumber: 383,
+                lineNumber: 384,
                 columnNumber: 9
             }, this),
             isModalOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative",
+                    className: "bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
                             className: "text-lg font-semibold mb-4",
                             children: "Edit Deal"
                         }, void 0, false, {
                             fileName: "[project]/components/admin/DealsList.tsx",
-                            lineNumber: 418,
+                            lineNumber: 419,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1491,8 +1490,8 @@ function DealsList() {
                                         })
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 421,
-                                    columnNumber: 15
+                                    lineNumber: 423,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     className: "border p-2 rounded",
@@ -1504,8 +1503,8 @@ function DealsList() {
                                         })
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 429,
-                                    columnNumber: 15
+                                    lineNumber: 432,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     type: "number",
@@ -1532,8 +1531,8 @@ function DealsList() {
                                     }
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 437,
-                                    columnNumber: 14
+                                    lineNumber: 441,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     type: "number",
@@ -1560,8 +1559,8 @@ function DealsList() {
                                     }
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 466,
-                                    columnNumber: 1
+                                    lineNumber: 470,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     className: "border p-2 rounded",
@@ -1573,8 +1572,8 @@ function DealsList() {
                                         })
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 495,
-                                    columnNumber: 15
+                                    lineNumber: 499,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     className: "border p-2 rounded",
@@ -1586,8 +1585,8 @@ function DealsList() {
                                         })
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 503,
-                                    columnNumber: 15
+                                    lineNumber: 508,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     className: "border p-2 rounded",
@@ -1599,8 +1598,8 @@ function DealsList() {
                                         })
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 511,
-                                    columnNumber: 15
+                                    lineNumber: 517,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     className: "border p-2 rounded",
@@ -1612,8 +1611,8 @@ function DealsList() {
                                         })
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 519,
-                                    columnNumber: 15
+                                    lineNumber: 526,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     className: "border p-2 rounded",
@@ -1625,8 +1624,8 @@ function DealsList() {
                                         })
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 527,
-                                    columnNumber: 15
+                                    lineNumber: 535,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     className: "border p-2 rounded",
@@ -1638,8 +1637,8 @@ function DealsList() {
                                         })
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 535,
-                                    columnNumber: 15
+                                    lineNumber: 544,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                     className: "border p-2 rounded",
@@ -1651,8 +1650,8 @@ function DealsList() {
                                         })
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 544,
-                                    columnNumber: 15
+                                    lineNumber: 553,
+                                    columnNumber: 3
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
                                     className: "border p-2 rounded",
@@ -1666,19 +1665,47 @@ function DealsList() {
                                             children: tag === "" ? "No holiday / event" : tag
                                         }, tag, false, {
                                             fileName: "[project]/components/admin/DealsList.tsx",
-                                            lineNumber: 560,
-                                            columnNumber: 5
+                                            lineNumber: 570,
+                                            columnNumber: 7
                                         }, this))
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 552,
-                                    columnNumber: 6
+                                    lineNumber: 562,
+                                    columnNumber: 3
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                    className: "flex items-center gap-2 border p-2 rounded col-span-2",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                            type: "checkbox",
+                                            checked: !!editDeal?.exclude_from_auto,
+                                            onChange: (e)=>setEditDeal({
+                                                    ...editDeal,
+                                                    exclude_from_auto: e.target.checked
+                                                })
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/admin/DealsList.tsx",
+                                            lineNumber: 578,
+                                            columnNumber: 5
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                            children: "Exclude from auto-publish"
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/admin/DealsList.tsx",
+                                            lineNumber: 588,
+                                            columnNumber: 5
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/components/admin/DealsList.tsx",
+                                    lineNumber: 577,
+                                    columnNumber: 3
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/admin/DealsList.tsx",
-                            lineNumber: 420,
-                            columnNumber: 13
+                            lineNumber: 421,
+                            columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "flex justify-end gap-2 mt-5",
@@ -1689,7 +1716,7 @@ function DealsList() {
                                     children: "Cancel"
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 570,
+                                    lineNumber: 593,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1699,24 +1726,24 @@ function DealsList() {
                                     children: saving ? "Saving..." : "Save Changes"
                                 }, void 0, false, {
                                     fileName: "[project]/components/admin/DealsList.tsx",
-                                    lineNumber: 576,
+                                    lineNumber: 599,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/admin/DealsList.tsx",
-                            lineNumber: 569,
+                            lineNumber: 592,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/admin/DealsList.tsx",
-                    lineNumber: 417,
-                    columnNumber: 11
+                    lineNumber: 418,
+                    columnNumber: 1
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/admin/DealsList.tsx",
-                lineNumber: 416,
+                lineNumber: 417,
                 columnNumber: 9
             }, this)
         ]
