@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-  apiKey: process.env.CHATGPT_API_KEY!,
+  apiKey: process.env.OPENAI_API_KEY!,
 });
+
 
 /**
  * Fallback if AI unavailable or returns invalid JSON
