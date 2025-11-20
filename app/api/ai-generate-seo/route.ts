@@ -51,8 +51,8 @@ Product Link: ${body.productLink || "None"}
     //  GPT-4.1-MINI RESPONSE
     // -------------------------------
     const ai = await openai.responses.create({
-      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      input: `
+  model: "gpt-4.1-mini",
+  input: `
 Rewrite this product for a deals website and return JSON:
 
 {
@@ -65,8 +65,8 @@ Rewrite this product for a deals website and return JSON:
 Product Data:
 ${productInfo}
 `,
-      max_output_tokens: 900,
-    });
+  max_output_tokens: 900,
+});
 
     // Prefer ai.output_text ALWAYS (cleanest string output)
     let raw = ai.output_text || "";
