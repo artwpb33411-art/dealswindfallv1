@@ -29,12 +29,36 @@
       "namedRegex": "^/api/deals/(?<nxtPid>[^/]+?)(?:/)?$"
     },
     {
-      "page": "/deal/[id]",
-      "regex": "^/deal/([^/]+?)(?:/)?$",
+      "page": "/api/deals/[id]/delete",
+      "regex": "^/api/deals/([^/]+?)/delete(?:/)?$",
       "routeKeys": {
         "nxtPid": "nxtPid"
       },
-      "namedRegex": "^/deal/(?<nxtPid>[^/]+?)(?:/)?$"
+      "namedRegex": "^/api/deals/(?<nxtPid>[^/]+?)/delete(?:/)?$"
+    },
+    {
+      "page": "/api/deals/[id]/publish",
+      "regex": "^/api/deals/([^/]+?)/publish(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/deals/(?<nxtPid>[^/]+?)/publish(?:/)?$"
+    },
+    {
+      "page": "/api/es/deals/[slug]",
+      "regex": "^/api/es/deals/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/api/es/deals/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/deals/[slug]",
+      "regex": "^/deals/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/deals/(?<nxtPslug>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [
@@ -67,6 +91,12 @@
       "regex": "^/api/admin/analytics(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/admin/analytics(?:/)?$"
+    },
+    {
+      "page": "/api/ai-generate-seo",
+      "regex": "^/api/ai\\-generate\\-seo(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ai\\-generate\\-seo(?:/)?$"
     },
     {
       "page": "/api/analytics/list",
@@ -123,6 +153,12 @@
       "namedRegex": "^/api/fetch\\-title(?:/)?$"
     },
     {
+      "page": "/api/generate-description",
+      "regex": "^/api/generate\\-description(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/generate\\-description(?:/)?$"
+    },
+    {
       "page": "/api/holiday-events",
       "regex": "^/api/holiday\\-events(?:/)?$",
       "routeKeys": {},
@@ -169,6 +205,18 @@
       "regex": "^/login(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/robots.txt",
+      "regex": "^/robots\\.txt(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/robots\\.txt(?:/)?$"
+    },
+    {
+      "page": "/sitemap.xml",
+      "regex": "^/sitemap\\.xml(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sitemap\\.xml(?:/)?$"
     }
   ],
   "dataRoutes": [],

@@ -162,11 +162,11 @@ body {
    ======================================== */
 
 /* Default: prevent global scroll for app layout pages */
-body:not(.admin-page) {
+/*body:not(.admin-page) {
   overflow: hidden;
   height: 100vh;
 }
-
+*/
 /* Allow normal scrolling on admin pages */
 body.admin-page {
   overflow-y: auto;

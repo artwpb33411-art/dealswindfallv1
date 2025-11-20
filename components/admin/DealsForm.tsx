@@ -3,7 +3,11 @@ import { useState } from "react";
 
 export default function DealsForm() {
   const [form, setForm] = useState({
-    description: "",
+    description: "",        // EN Title
+    notes: "",              // EN Description
+    description_es: "",     // ES Title
+    notes_es: "",           // ES Description
+
     currentPrice: "",
     oldPrice: "",
     storeName: "",
@@ -12,7 +16,6 @@ export default function DealsForm() {
     reviewLink: "",
     couponCode: "",
     shippingCost: "",
-    notes: "",
     expireDate: "",
     category: "",
     holidayTag: "",
@@ -20,33 +23,28 @@ export default function DealsForm() {
 
   const HOLIDAY_TAGS = [
     "",
-    "Black Friday",
-    "Cyber Monday",
-    "Thanksgiving Week",
-    "Christmas & Holiday",
-    "New Year",
-    "Back to School",
-    "Prime Day",
-    "Memorial Day",
-    "Labor Day",
-    "Independence Day",
-    "Spring Sale",
-    "Clearance Event",
+    "Black Friday", "Cyber Monday", "Thanksgiving Week",
+    "Christmas", "New Year", "Back to School",
+    "Prime Day", "Memorial Day", "Labor Day", "Independence Day",
+    "Spring Sale", "World Cup",
   ];
 
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
   const [productUrl, setProductUrl] = useState("");
   const [fetching, setFetching] = useState(false);
+  const [fetchingAI, setFetchingAI] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
   const onChange = (e: any) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // 🧠 Auto-fetch logic (Amazon/Walmart/Target main product)
+  // ---------------------------------------------------
+  // 1) AUTO-SCRAPE BUTTON (Amazon/Walmart/Target)
+  // ---------------------------------------------------
   const handleAutoFetch = async () => {
-    if (!productUrl) return alert("Please paste a product link first.");
+    if (!productUrl) return alert("Please paste product link first.");
     setFetching(true);
-    setMsg(null);
+    setMsg("⏳ Fetching product data...");
 
     try {
       const res = await fetch("/api/scrape", {
@@ -56,28 +54,80 @@ export default function DealsForm() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch product data");
+      if (!res.ok) throw new Error(data.error || "Failed to scrape");
 
       setForm((prev) => ({
         ...prev,
         description: data.title || prev.description,
+        currentPrice: data.price?.replace(/[^0-9.]/g, "") || prev.currentPrice,
         storeName: data.store || prev.storeName,
         category: data.category || prev.category,
         imageLink: data.image || prev.imageLink,
         productLink: productUrl,
-        currentPrice:
-          data.price?.replace(/[^0-9.]/g, "") || prev.currentPrice,
       }));
 
       setMsg("✅ Product info fetched successfully!");
     } catch (err: any) {
-      console.error("❌ Fetch error:", err);
-      setMsg(`❌ ${err.message}`);
-    } finally {
-      setFetching(false);
+      console.error(err);
+      setMsg("❌ " + err.message);
     }
-  };
 
+    setFetching(false);
+  };
+// 2) AI BUTTON → Rewrite EN + ES SEO Titles & Descriptions
+const generateAI = async () => {
+  if (!form.description.trim()) {
+    return alert("Enter the English Title before generating AI content.");
+  }
+
+  setFetchingAI(true);
+  setMsg("⏳ Rewriting English & Spanish titles and descriptions...");
+
+  try {
+    const res = await fetch("/api/generate-description", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: form.description,
+        notes: form.notes,
+        store: form.storeName,
+        category: form.category,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      // fallback
+      setForm(prev => ({
+        ...prev,
+        description_es: prev.description_es || prev.description,
+        notes_es: prev.notes_es || prev.notes,
+      }));
+      setMsg("⚠️ AI unavailable — kept English text, copied to Spanish.");
+    } else {
+      setForm(prev => ({
+        ...prev,
+        description: data.title_en,
+        notes: data.description_en,
+        description_es: data.title_es,
+        notes_es: data.description_es,
+      }));
+      setMsg("✅ AI generated full English & Spanish SEO content!");
+    }
+  } catch (err: any) {
+    console.error(err);
+    setMsg("❌ AI error: " + err.message);
+  }
+
+  setFetchingAI(false);
+};
+
+
+
+  // ---------------------------------------------------
+  // 3) SUBMIT → Save to Supabase (/api/deals)
+  // ---------------------------------------------------
   const onSubmit = async (e: any) => {
     e.preventDefault();
     setSaving(true);
@@ -87,47 +137,49 @@ export default function DealsForm() {
       const res = await fetch("/api/deals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          expireDate: form.expireDate ? form.expireDate : null,
-          published_at: new Date().toISOString(),
-          // ⚠️ The backend will parse `notes` and create rows in deal_related_links
-        }),
+        body: JSON.stringify(form),
       });
 
       const data = await res.json();
       setSaving(false);
 
       if (!res.ok) {
-        console.error("API error:", data);
-        setMsg(`❌ ${data.error || "Failed to save"}`);
-      } else {
-        console.log("✅ Deal saved:", data);
-        setMsg("✅ Deal saved successfully!");
-        setForm({
-          description: "",
-          currentPrice: "",
-          oldPrice: "",
-          storeName: "",
-          imageLink: "",
-          productLink: "",
-          reviewLink: "",
-          couponCode: "",
-          shippingCost: "",
-          notes: "",
-          expireDate: "",
-          category: "",
-          holidayTag: "",
-        });
-        setProductUrl("");
+        setMsg("❌ " + (data.error || "Failed to save deal"));
+        return;
       }
+
+      setMsg("✅ Deal saved successfully!");
+
+      // Reset form
+      setForm({
+        description: "",
+        notes: "",
+        description_es: "",
+        notes_es: "",
+        currentPrice: "",
+        oldPrice: "",
+        storeName: "",
+        imageLink: "",
+        productLink: "",
+        reviewLink: "",
+        couponCode: "",
+        shippingCost: "",
+        expireDate: "",
+        category: "",
+        holidayTag: "",
+      });
+      setProductUrl("");
+
     } catch (err: any) {
-      console.error("Network error:", err);
+      console.error(err);
       setMsg("❌ Network error");
       setSaving(false);
     }
   };
 
+  // ---------------------------------------------------
+  // UI Form
+  // ---------------------------------------------------
   return (
     <form
       onSubmit={onSubmit}
@@ -138,8 +190,10 @@ export default function DealsForm() {
       </h2>
       {msg && <div className="text-sm">{msg}</div>}
 
-      {/* 🆕 Smart Fetch Section */}
-      <div className="flex gap-2 items-center">
+      {/* --------------------------
+           SCRAPE PRODUCT INFO
+      -------------------------- */}
+      <div className="flex gap-2">
         <input
           type="url"
           placeholder="Paste Amazon / Walmart / Target product link..."
@@ -159,14 +213,63 @@ export default function DealsForm() {
         </button>
       </div>
 
+      {/* --------------------------
+           AI SEO GENERATION
+      -------------------------- */}
+      <button
+        type="button"
+        onClick={generateAI}
+        disabled={fetchingAI}
+        className={`w-full p-2 rounded text-white ${
+          fetchingAI ? "bg-gray-400" : "bg-purple-600 hover:bg-purple-700"
+        }`}
+      >
+        {fetchingAI ? "Generating..." : "✨ AI: Generate EN + ES SEO"}
+      </button>
+
+      {/* --------------------------
+           ENGLISH TITLE + DESCRIPTION
+      -------------------------- */}
       <input
         name="description"
         value={form.description}
         onChange={onChange}
-        placeholder="Description"
+        placeholder="English Title"
         className="input"
       />
 
+      <textarea
+        name="notes"
+        value={form.notes}
+        onChange={onChange}
+        placeholder="English Description"
+        className="input"
+        rows={3}
+      />
+
+      {/* --------------------------
+           SPANISH TITLE + DESCRIPTION
+      -------------------------- */}
+      <input
+        name="description_es"
+        value={form.description_es}
+        onChange={onChange}
+        placeholder="Título en Español"
+        className="input"
+      />
+
+      <textarea
+        name="notes_es"
+        value={form.notes_es}
+        onChange={onChange}
+        placeholder="Descripción en Español"
+        className="input"
+        rows={3}
+      />
+
+      {/* --------------------------
+           PRICES + STORE
+      -------------------------- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <input
           name="currentPrice"
@@ -191,6 +294,9 @@ export default function DealsForm() {
         />
       </div>
 
+      {/* --------------------------
+           LINKS
+      -------------------------- */}
       <input
         name="imageLink"
         value={form.imageLink}
@@ -198,6 +304,7 @@ export default function DealsForm() {
         placeholder="Image Link"
         className="input"
       />
+
       <input
         name="productLink"
         value={form.productLink}
@@ -205,6 +312,7 @@ export default function DealsForm() {
         placeholder="Product Link"
         className="input"
       />
+
       <input
         name="reviewLink"
         value={form.reviewLink}
@@ -212,6 +320,10 @@ export default function DealsForm() {
         placeholder="Review Link"
         className="input"
       />
+
+      {/* --------------------------
+           MISC FIELDS
+      -------------------------- */}
       <input
         name="couponCode"
         value={form.couponCode}
@@ -219,20 +331,12 @@ export default function DealsForm() {
         placeholder="Coupon Code"
         className="input"
       />
+
       <input
         name="shippingCost"
         value={form.shippingCost}
         onChange={onChange}
         placeholder="Shipping Cost"
-        className="input"
-      />
-
-      {/* NOTES — admin can paste links here, backend will parse URLs */}
-      <textarea
-        name="notes"
-        value={form.notes}
-        onChange={onChange}
-        placeholder="Notes (plain text + links to similar deals)"
         className="input"
       />
 
@@ -243,6 +347,7 @@ export default function DealsForm() {
         placeholder="Deal Expiry Date"
         className="input"
       />
+
       <input
         name="category"
         value={form.category}
@@ -251,7 +356,7 @@ export default function DealsForm() {
         className="input"
       />
 
-      {/* Holiday / Event Tag */}
+      {/* Holiday */}
       <select
         name="holidayTag"
         value={form.holidayTag}
@@ -260,11 +365,14 @@ export default function DealsForm() {
       >
         {HOLIDAY_TAGS.map((tag) => (
           <option key={tag} value={tag}>
-            {tag === "" ? "No holiday / event" : tag}
+            {tag || "No holiday / event"}
           </option>
         ))}
       </select>
 
+      {/* --------------------------
+           SAVE BUTTON
+      -------------------------- */}
       <button
         type="submit"
         disabled={saving}

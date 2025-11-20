@@ -1,16 +1,50 @@
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
+import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-/* -------------------------------------------------------------------------- */
-/* 🔧 Helpers                                                                  */
-/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------
+   OPENAI (try OPENAI_API_KEY, fallback CHATGPT_API_KEY)
+------------------------------------------------------------- */
+const openaiApiKey =
+  process.env.OPENAI_API_KEY || process.env.CHATGPT_API_KEY || "";
 
-// Extract URLs from notes
+const hasOpenAIKey = !!openaiApiKey;
+
+const openai = new OpenAI({
+  apiKey: openaiApiKey || "dummy", // won't be used if hasOpenAIKey = false
+});
+
+/* -------------------------------------------------------------
+   Supabase Clients
+------------------------------------------------------------- */
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { persistSession: false } }
+);
+
+/* -------------------------------------------------------------
+   Helper: Slugify
+------------------------------------------------------------- */
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 120);
+}
+
+/* -------------------------------------------------------------
+   Helper: Extract URLs from notes
+------------------------------------------------------------- */
 function extractUrls(text: string) {
   return text?.match(/https?:\/\/[^\s]+/g) || [];
 }
 
-// Get base URL (VERY IMPORTANT!)
+/* -------------------------------------------------------------
+   Helper: Get Page Title from URL
+------------------------------------------------------------- */
 function getBaseUrl() {
   return (
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -19,11 +53,9 @@ function getBaseUrl() {
   );
 }
 
-// Fetch title from internal route (safe server version)
 async function getTitle(url: string) {
   try {
     const base = getBaseUrl();
-
     const res = await fetch(`${base}/api/fetch-title`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -31,7 +63,6 @@ async function getTitle(url: string) {
     });
 
     if (!res.ok) return null;
-
     const data = await res.json();
     return data.title || null;
   } catch (err) {
@@ -40,98 +71,200 @@ async function getTitle(url: string) {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* 🟢 CREATE a new deal (POST)                                                 */
-/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------
+   Helper: Deal level & discount
+------------------------------------------------------------- */
+function computeDealMetrics(oldPrice: number, currentPrice: number) {
+  if (!oldPrice || !currentPrice || oldPrice <= 0 || currentPrice <= 0) {
+    return { price_diff: null, percent_diff: null, deal_level: null };
+  }
+
+  const priceDiff = oldPrice - currentPrice;
+  const percentDiff = Number(((priceDiff / oldPrice) * 100).toFixed(2));
+
+  let dealLevel = "";
+  if (percentDiff >= 40 && percentDiff < 51) dealLevel = "Blistering deal";
+  else if (percentDiff >= 51 && percentDiff < 61) dealLevel = "Scorching deal";
+  else if (percentDiff >= 61 && percentDiff < 71) dealLevel = "Searing deal";
+  else if (percentDiff >= 71) dealLevel = "Flaming deal";
+
+  return {
+    price_diff: priceDiff,
+    percent_diff: percentDiff,
+    deal_level: dealLevel || null,
+  };
+}
+
+/* -------------------------------------------------------------
+   POST → Create a NEW deal (with AI ES if needed)
+------------------------------------------------------------- */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // Parse prices
-    const oldP = parseFloat(body.old_price || body.oldPrice || 0);
-    const currP = parseFloat(body.current_price || body.currentPrice || 0);
-    const priceDiff = oldP && currP ? oldP - currP : 0;
-    const percentDiff = oldP ? Number(((priceDiff / oldP) * 100).toFixed(2)) : 0;
+    const {
+      description, // EN title
+      notes,       // EN description
+      description_es, // optional ES title
+      notes_es,       // optional ES description
+      category,
+      storeName,
+      currentPrice,
+      oldPrice,
+      shippingCost,
+      couponCode,
+      holidayTag,
+      productLink,
+      reviewLink,
+      imageLink,
+      expireDate,
+    } = body;
 
-    // Determine deal heat level
-    let dealLevel = "";
-    if (percentDiff >= 40 && percentDiff < 51) dealLevel = "Blistering deal";
-    else if (percentDiff >= 51 && percentDiff < 61) dealLevel = "Scorching deal";
-    else if (percentDiff >= 61 && percentDiff < 71) dealLevel = "Searing deal";
-    else if (percentDiff >= 71) dealLevel = "Flaming deal";
+    if (!description || description.trim() === "") {
+      return NextResponse.json(
+        { error: "Missing English title." },
+        { status: 400 }
+      );
+    }
 
-    /* --------------------------------------------- */
-    /* STEP 1 — Save the MAIN DEAL                  */
-    /* --------------------------------------------- */
+    /* -------------------------------------------------------
+       AI GENERATION — ONLY IF Spanish not provided
+    ------------------------------------------------------- */
+    let finalTitleEs = description_es || "";
+    let finalNotesEs = notes_es || "";
 
-    const { data: deal, error } = await supabaseAdmin
+    if (hasOpenAIKey && (!finalTitleEs || !finalNotesEs)) {
+      const productText = `
+English Title: ${description}
+English Description: ${notes || ""}
+Category: ${category || ""}
+Store: ${storeName || ""}
+Price: ${currentPrice} (old: ${oldPrice})
+Shipping: ${shippingCost || ""}
+Coupon: ${couponCode || ""}
+Holiday/Event: ${holidayTag || ""}
+Product Link: ${productLink || ""}
+`;
+
+      try {
+        const ai = await openai.responses.create({
+          model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+          input: `
+Translate and rewrite the following product into professional Spanish SEO content.
+Return ONLY this JSON:
+
+{
+  "title_es": "",
+  "description_es": ""
+}
+
+${productText}
+          `,
+        });
+
+        const raw = (ai as any).output_text || "";
+        const cleaned = raw
+          .replace(/```json/gi, "")
+          .replace(/```/g, "")
+          .trim();
+
+        const parsed = JSON.parse(cleaned);
+        finalTitleEs = parsed.title_es || description;
+        finalNotesEs = parsed.description_es || notes || "";
+      } catch (err) {
+        console.error("AI ES generation failed, falling back:", err);
+        // fallback: copy EN into ES fields
+        finalTitleEs = description;
+        finalNotesEs = notes || "";
+      }
+    } else {
+      // if no key or Spanish already provided, just use what we have / copy EN
+      if (!finalTitleEs) finalTitleEs = description;
+      if (!finalNotesEs) finalNotesEs = notes || "";
+    }
+
+    /* -------------------------------------------------------
+       Compute deal metrics
+    ------------------------------------------------------- */
+    const oldNum = oldPrice ? Number(oldPrice) : 0;
+    const currNum = currentPrice ? Number(currentPrice) : 0;
+    const metrics = computeDealMetrics(oldNum, currNum);
+
+    /* -------------------------------------------------------
+       Create SLUGS
+    ------------------------------------------------------- */
+    const slug = slugify(description);
+    const slug_es = slugify(finalTitleEs);
+
+    /* -------------------------------------------------------
+       Prepare FINAL payload (snake_case)
+    ------------------------------------------------------- */
+    const payload: any = {
+      description,
+      notes: notes || "",
+      description_es: finalTitleEs,
+      notes_es: finalNotesEs,
+
+      current_price: currentPrice ? Number(currentPrice) : null,
+      old_price: oldPrice ? Number(oldPrice) : null,
+      store_name: storeName || null,
+      image_link: imageLink || null,
+      product_link: productLink || null,
+      review_link: reviewLink || null,
+      coupon_code: couponCode || null,
+      shipping_cost: shippingCost || null,
+      expire_date: expireDate || null,
+      category: category || null,
+      holiday_tag: holidayTag || null,
+
+      slug,
+      slug_es,
+      published_at: new Date().toISOString(),
+
+      price_diff: metrics.price_diff,
+      percent_diff: metrics.percent_diff,
+      deal_level: metrics.deal_level,
+    };
+
+    /* -------------------------------------------------------
+       Insert DEAL
+    ------------------------------------------------------- */
+    const { data: deal, error } = await supabase
       .from("deals")
-      .insert({
-        description: body.description || "",
-        current_price: currP || null,
-        old_price: oldP || null,
-        price_diff: priceDiff || null,
-        percent_diff: percentDiff || null,
-        image_link: body.imageLink || null,
-        product_link: body.productLink || null,
-        review_link: body.reviewLink || null,
-        coupon_code: body.couponCode || null,
-        shipping_cost: body.shippingCost
-          ? Number(body.shippingCost)
-          : null,
-        notes: body.notes || null,
-        expire_date: body.expireDate || null,
-        category: body.category || null,
-        store_name: body.storeName || null,
-        deal_level: dealLevel,
-        holiday_tag: body.holidayTag || null,
-        published_at: new Date().toISOString(),
-      })
+      .insert(payload)
       .select()
       .single();
 
     if (error) throw error;
 
-    /* --------------------------------------------- */
-    /* STEP 2 — Extract URLs from notes             */
-    /* --------------------------------------------- */
-
-    const urls = extractUrls(body.notes || "");
-
+    /* -------------------------------------------------------
+       Extract URLs from notes → related links
+    ------------------------------------------------------- */
+    const urls = extractUrls(notes || "");
     if (urls.length > 0) {
-      // Fetch all titles in parallel (MUCH faster)
       const titleResults = await Promise.all(urls.map((u) => getTitle(u)));
-
       const rows = urls.map((url, i) => ({
         deal_id: deal.id,
         url,
         title: titleResults[i] || null,
       }));
 
-      /* -------------------------------------------- */
-      /* STEP 3 — Insert related links               */
-      /* -------------------------------------------- */
-
-      const { error: relErr } = await supabaseAdmin
-        .from("deal_related_links")
-        .insert(rows);
-
-      if (relErr) console.error("❌ Related links insert failed:", relErr);
+      await supabaseAdmin.from("deal_related_links").insert(rows);
     }
 
-    return NextResponse.json({ ok: true, deal }, { status: 201 });
-  } catch (e: any) {
-    console.error("POST /deals error:", e);
+    return NextResponse.json(deal, { status: 200 });
+  } catch (err: any) {
+    console.error("DEALS POST error:", err);
     return NextResponse.json(
-      { error: e.message || "Unknown error" },
+      { error: err.message || "Unknown error" },
       { status: 500 }
     );
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* 📋 GET all deals                                                            */
-/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------
+   GET → Fetch ALL deals
+------------------------------------------------------------- */
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
@@ -140,48 +273,80 @@ export async function GET() {
       .order("published_at", { ascending: false });
 
     if (error) throw error;
-
-    return NextResponse.json(data || [], { status: 200 });
-  } catch (e: any) {
-    console.error("GET /deals error:", e);
-    return NextResponse.json(
-      { error: e.message || "Unknown error" },
-      { status: 500 }
-    );
+    return NextResponse.json(data, { status: 200 });
+  } catch (err: any) {
+    console.error("GET /deals error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-/* -------------------------------------------------------------------------- */
-/* ✏️ UPDATE existing deal (PUT)                                               */
-/* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------
+   PUT → Update existing deal (handle snake + camel)
+------------------------------------------------------------- */
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
     const { id, ...updateFields } = body;
 
-    if (!id) throw new Error("Missing deal ID for update.");
+    if (!id) throw new Error("Missing deal ID.");
 
-    // Recalculate discount if prices provided
-    const oldP = parseFloat(updateFields.old_price || 0);
-    const currP = parseFloat(updateFields.current_price || 0);
-
-    if (!isNaN(oldP) && !isNaN(currP) && oldP > 0 && currP > 0) {
-      const priceDiff = oldP - currP;
-      const percentDiff = Number(((priceDiff / oldP) * 100).toFixed(2));
-
-      let dealLevel = "";
-      if (percentDiff >= 40 && percentDiff < 51) dealLevel = "Blistering deal";
-      else if (percentDiff >= 51 && percentDiff < 61)
-        dealLevel = "Scorching deal";
-      else if (percentDiff >= 61 && percentDiff < 71)
-        dealLevel = "Searing deal";
-      else if (percentDiff >= 71) dealLevel = "Flaming deal";
-
-      updateFields.price_diff = priceDiff;
-      updateFields.percent_diff = percentDiff;
-      updateFields.deal_level = dealLevel;
+    // Map possible camelCase to snake_case if they come in that way
+    if ("currentPrice" in updateFields) {
+      (updateFields as any).current_price = Number(updateFields.currentPrice);
+      delete (updateFields as any).currentPrice;
+    }
+    if ("oldPrice" in updateFields) {
+      (updateFields as any).old_price = Number(updateFields.oldPrice);
+      delete (updateFields as any).oldPrice;
+    }
+    if ("storeName" in updateFields) {
+      (updateFields as any).store_name = updateFields.storeName;
+      delete (updateFields as any).storeName;
+    }
+    if ("imageLink" in updateFields) {
+      (updateFields as any).image_link = updateFields.imageLink;
+      delete (updateFields as any).imageLink;
+    }
+    if ("productLink" in updateFields) {
+      (updateFields as any).product_link = updateFields.productLink;
+      delete (updateFields as any).productLink;
+    }
+    if ("reviewLink" in updateFields) {
+      (updateFields as any).review_link = updateFields.reviewLink;
+      delete (updateFields as any).reviewLink;
+    }
+    if ("couponCode" in updateFields) {
+      (updateFields as any).coupon_code = updateFields.couponCode;
+      delete (updateFields as any).couponCode;
+    }
+    if ("shippingCost" in updateFields) {
+      (updateFields as any).shipping_cost = updateFields.shippingCost;
+      delete (updateFields as any).shippingCost;
+    }
+    if ("expireDate" in updateFields) {
+      (updateFields as any).expire_date = updateFields.expireDate;
+      delete (updateFields as any).expireDate;
+    }
+    if ("holidayTag" in updateFields) {
+      (updateFields as any).holiday_tag = updateFields.holidayTag;
+      delete (updateFields as any).holidayTag;
     }
 
-    // Update in Supabase
+    // Recalculate discount if prices present
+    const oldP = parseFloat(
+      (updateFields as any).old_price ?? body.old_price ?? 0
+    );
+    const currP = parseFloat(
+      (updateFields as any).current_price ?? body.current_price ?? 0
+    );
+
+    if (!isNaN(oldP) && !isNaN(currP) && oldP > 0 && currP > 0) {
+      const metrics = computeDealMetrics(oldP, currP);
+      (updateFields as any).price_diff = metrics.price_diff;
+      (updateFields as any).percent_diff = metrics.percent_diff;
+      (updateFields as any).deal_level = metrics.deal_level;
+    }
+
     const { data, error } = await supabaseAdmin
       .from("deals")
       .update(updateFields)
@@ -190,57 +355,30 @@ export async function PUT(req: Request) {
       .single();
 
     if (error) throw error;
-
-    return NextResponse.json({ ok: true, updated: data }, { status: 200 });
-  } catch (e: any) {
-    console.error("PUT /deals error:", e);
-    return NextResponse.json(
-      { error: e.message || "Unknown error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: true, updated: data });
+  } catch (err: any) {
+    console.error("PUT /deals error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+/* -------------------------------------------------------------
+   DELETE → Delete existing deal
+------------------------------------------------------------- */
 export async function DELETE(req: Request) {
   try {
     const { id } = await req.json();
     if (!id) throw new Error("Missing deal ID");
 
-    console.log("🗑 Deleting related links for deal:", id);
+    // Delete related links
+    await supabaseAdmin.from("deal_related_links").delete().eq("deal_id", id);
 
-    // 1️⃣ Delete related links first (safe even if cascade exists)
-    const relDelete = await supabaseAdmin
-      .from("deal_related_links")
-      .delete()
-      .eq("deal_id", id);
+    // Delete main deal
+    await supabaseAdmin.from("deals").delete().eq("id", id);
 
-    if (relDelete.error) {
-      console.error("❌ Failed deleting related links:", relDelete.error);
-      throw relDelete.error;
-    }
-
-    console.log("🗑 Deleting deal:", id);
-
-    // 2️⃣ Now delete the deal
-    const dealDelete = await supabaseAdmin
-      .from("deals")
-      .delete()
-      .eq("id", id);
-
-    if (dealDelete.error) {
-      console.error("❌ Failed deleting deal:", dealDelete.error);
-      throw dealDelete.error;
-    }
-
-    return NextResponse.json(
-      { ok: true, message: "Deal deleted" },
-      { status: 200 }
-    );
-
+    return NextResponse.json({ ok: true, message: "Deal deleted" });
   } catch (err: any) {
-    console.error("🔥 DELETE /deals crashed:", err);
-    return NextResponse.json(
-      { error: err.message || "Unknown delete error" },
-      { status: 500 }
-    );
+    console.error("DELETE /deals error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

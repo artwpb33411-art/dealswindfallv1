@@ -7,6 +7,7 @@ export default function BulkUploadDeals() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<string>("");
+  const [useAI, setUseAI] = useState<boolean>(true);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -71,12 +72,14 @@ export default function BulkUploadDeals() {
       const res = await fetch("/api/deals/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deals }),
+        body: JSON.stringify({ deals, useAI }),
       });
 
       const data = await res.json();
       if (res.ok) {
-        setResult(`✅ Successfully uploaded ${data.inserted || deals.length} deals.`);
+        setResult(
+          `✅ Successfully uploaded ${data.inserted || deals.length} deals.`
+        );
       } else {
         setResult(`❌ Error: ${data.error || "Upload failed."}`);
       }
@@ -90,7 +93,9 @@ export default function BulkUploadDeals() {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow border border-gray-200">
-      <h2 className="text-lg font-semibold mb-3 text-blue-600">Bulk Upload Deals</h2>
+      <h2 className="text-lg font-semibold mb-3 text-blue-600">
+        Bulk Upload Deals
+      </h2>
 
       <input
         type="file"
@@ -98,6 +103,15 @@ export default function BulkUploadDeals() {
         onChange={handleFileChange}
         className="border border-gray-300 p-2 rounded-md w-full mb-3"
       />
+
+      <label className="flex items-center gap-2 mb-3 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          checked={useAI}
+          onChange={(e) => setUseAI(e.target.checked)}
+        />
+        <span>Use AI to generate EN/ES descriptions if missing</span>
+      </label>
 
       <button
         onClick={handleUpload}

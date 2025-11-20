@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import React from "react";
+import { useLangStore } from "@/lib/languageStore";   // ⭐ ADD THIS
+import { useEffect } from "react";
 
 type SearchBarProps = {
   onSearch: (value: string) => void;
@@ -9,10 +11,19 @@ type SearchBarProps = {
 };
 
 export default function SearchBar({ onSearch, onHome }: SearchBarProps) {
+  const { lang, setLang, hydrated, hydrate } = useLangStore();
+
+useEffect(() => {
+  hydrate();
+}, []);
+
+if (!hydrated) return null;
+
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
       <div className="mx-auto max-w-screen-2xl px-0 py-3 flex items-center">
-
+        
         {/* Left: Logo */}
         <div
           className="flex items-center gap-2 shrink-0 cursor-pointer"
@@ -48,8 +59,30 @@ export default function SearchBar({ onSearch, onHome }: SearchBarProps) {
           />
         </div>
 
-        {/* Right side placeholder */}
-        <div className="hidden md:flex items-center gap-3 ml-4"></div>
+        {/* Right: Language Switcher */}
+        <div className="hidden md:flex items-center gap-3 ml-4">
+          <div className="flex items-center gap-1 border rounded-md px-2 py-1">
+            <button
+              onClick={() => setLang("en")}
+              className={`text-xs px-1 ${
+                lang === "en" ? "text-blue-600 font-semibold" : "text-gray-600"
+              }`}
+            >
+              EN
+            </button>
+
+            <span className="text-gray-400">|</span>
+
+            <button
+              onClick={() => setLang("es")}
+              className={`text-xs px-1 ${
+                lang === "es" ? "text-blue-600 font-semibold" : "text-gray-600"
+              }`}
+            >
+              ES
+            </button>
+          </div>
+        </div>
       </div>
     </header>
   );

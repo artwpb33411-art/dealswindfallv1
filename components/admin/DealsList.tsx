@@ -477,52 +477,171 @@ const handleEdit = (deal: any) => {
       )}
 
       {/* Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative">
-            <h3 className="text-lg font-semibold mb-4">Edit Deal</h3>
+     {/* Edit Modal */}
+{isModalOpen && editDeal && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+    <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 relative">
+      <h3 className="text-lg font-semibold mb-4">Edit Deal</h3>
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* description */}
-              <input
-                className="border p-2 rounded"
-                placeholder="Description"
-                value={editDeal?.description || ""}
-                onChange={(e) =>
-                  setEditDeal({ ...editDeal, description: e.target.value })
-                }
-              />
+      <div className="grid grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2">
+        {/* EN title & description */}
+        <input
+          className="border p-2 rounded"
+          placeholder="English Title"
+          value={editDeal.description || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, description: e.target.value })
+          }
+        />
+        <textarea
+          className="border p-2 rounded"
+          placeholder="English Description"
+          value={editDeal.notes || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, notes: e.target.value })
+          }
+          rows={3}
+        />
 
-              <input
-                className="border p-2 rounded"
-                placeholder="Store Name"
-                value={editDeal?.store_name || ""}
-                onChange={(e) =>
-                  setEditDeal({ ...editDeal, store_name: e.target.value })
-                }
-              />
+        {/* ES title & description */}
+        <input
+          className="border p-2 rounded"
+          placeholder="Título en Español"
+          value={editDeal.description_es || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, description_es: e.target.value })
+          }
+        />
+        <textarea
+          className="border p-2 rounded"
+          placeholder="Descripción en Español"
+          value={editDeal.notes_es || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, notes_es: e.target.value })
+          }
+          rows={3}
+        />
 
-              {/* price logic omitted for clarity, unchanged */}
-            </div>
+        {/* Prices & store */}
+        <input
+          className="border p-2 rounded"
+          placeholder="Current Price"
+          value={editDeal.current_price ?? ""}
+          onChange={(e) =>
+            setEditDeal({
+              ...editDeal,
+              current_price: e.target.value,
+            })
+          }
+        />
+        <input
+          className="border p-2 rounded"
+          placeholder="Old Price"
+          value={editDeal.old_price ?? ""}
+          onChange={(e) =>
+            setEditDeal({
+              ...editDeal,
+              old_price: e.target.value,
+            })
+          }
+        />
+        <input
+          className="border p-2 rounded"
+          placeholder="Store Name"
+          value={editDeal.store_name || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, store_name: e.target.value })
+          }
+        />
 
-            <div className="flex justify-end gap-2 mt-5">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* Links */}
+        <input
+          className="border p-2 rounded"
+          placeholder="Image Link"
+          value={editDeal.image_link || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, image_link: e.target.value })
+          }
+        />
+        <input
+          className="border p-2 rounded"
+          placeholder="Product Link"
+          value={editDeal.product_link || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, product_link: e.target.value })
+          }
+        />
+        <input
+          className="border p-2 rounded"
+          placeholder="Review Link"
+          value={editDeal.review_link || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, review_link: e.target.value })
+          }
+        />
+
+        {/* Misc */}
+        <input
+          className="border p-2 rounded"
+          placeholder="Coupon Code"
+          value={editDeal.coupon_code || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, coupon_code: e.target.value })
+          }
+        />
+        <input
+          className="border p-2 rounded"
+          placeholder="Shipping Cost"
+          value={editDeal.shipping_cost || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, shipping_cost: e.target.value })
+          }
+        />
+        <input
+          className="border p-2 rounded"
+          placeholder="Expiry Date (YYYY-MM-DD)"
+          value={editDeal.expire_date || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, expire_date: e.target.value })
+          }
+        />
+        <input
+          className="border p-2 rounded"
+          placeholder="Category"
+          value={editDeal.category || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, category: e.target.value })
+          }
+        />
+        <input
+          className="border p-2 rounded"
+          placeholder="Holiday Tag"
+          value={editDeal.holiday_tag || ""}
+          onChange={(e) =>
+            setEditDeal({ ...editDeal, holiday_tag: e.target.value })
+          }
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 mt-5">
+        <button
+          onClick={() => setIsModalOpen(false)}
+          className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

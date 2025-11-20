@@ -1,168 +1,215 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-
-function getBaseUrl() {
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000"; // fallback for local dev
+/* -------------------------------------------------------------
+   Helpers
+------------------------------------------------------------- */
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 120);
 }
 
-/* ----------------------------------------------- */
-/* Extract URLs from text                          */
-/* ----------------------------------------------- */
 function extractUrls(text: string) {
   return text?.match(/https?:\/\/[^\s]+/g) || [];
 }
 
-/* ----------------------------------------------- */
-/* Fetch title from internal endpoint              */
-/* ----------------------------------------------- */
-async function getTitle(url: string) {
-  try {
-    const base = getBaseUrl();
-
-    const res = await fetch(`${base}/api/fetch-title`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    return data.title || null;
-  } catch (err) {
-    console.error("Title fetch failed:", err);
-    return null;
+function computeMetrics(oldP: number, currP: number) {
+  if (!oldP || !currP || oldP <= 0 || currP <= 0) {
+    return { price_diff: null, percent_diff: null, deal_level: null };
   }
+
+  const priceDiff = oldP - currP;
+  const percentDiff = Number(((priceDiff / oldP) * 100).toFixed(2));
+
+  let dealLevel = "";
+  if (percentDiff >= 40 && percentDiff < 51) dealLevel = "Blistering deal";
+  else if (percentDiff >= 51 && percentDiff < 61) dealLevel = "Scorching deal";
+  else if (percentDiff >= 61 && percentDiff < 71) dealLevel = "Searing deal";
+  else if (percentDiff >= 71) dealLevel = "Flaming deal";
+
+  return { price_diff: priceDiff, percent_diff: percentDiff, deal_level: dealLevel || null };
 }
 
+function getBaseUrl() {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_VERCEL_URL ||
+    "http://localhost:3000"
+  );
+}
 
-/* ----------------------------------------------- */
-/* 🟦 BULK UPLOAD ROUTE                             */
-/* ----------------------------------------------- */
+/* -------------------------------------------------------------
+   BULK API ROUTE
+------------------------------------------------------------- */
 export async function POST(req: Request) {
   try {
-    const { deals } = await req.json();
+    const { deals, useAI } = await req.json();
 
     if (!Array.isArray(deals) || deals.length === 0) {
-      throw new Error("No deals provided.");
+      return NextResponse.json({ error: "No deals provided." }, { status: 400 });
     }
 
-    const finalDeals = [];
-    const relatedLinksToInsert = [];
+    const baseUrl = getBaseUrl();
+    const finalRows: any[] = [];
+    const linksToInsert: any[] = [];
 
-    /* ----------------------------------------------- */
-    /* 🔁 Process each deal row                        */
-    /* ----------------------------------------------- */
-    for (const d of deals) {
-      const oldP = parseFloat(d.old_price || "0") || 0;
-      const currP = parseFloat(d.current_price || "0") || 0;
+    /* ---------------------------------------------------------
+       LOOP THROUGH EACH DEAL
+    --------------------------------------------------------- */
+    for (const raw of deals) {
+      // Normalize incoming columns from Excel/CSV
+      const title = raw.description || raw.title || raw.Title || "";
+      const notes = raw.notes || raw.description_text || raw.Description || "";
 
-      const priceDiff = oldP > 0 && currP > 0 ? oldP - currP : 0;
+      const store_name = raw.store_name || raw.store || raw.Store || null;
+      const category = raw.category || raw.Category || null;
 
-      let percentDiff = 0;
-      if (oldP > 0 && currP > 0) {
-        percentDiff = Number(((priceDiff / oldP) * 100).toFixed(2));
+      const current_price = Number(raw.current_price ?? raw.currentPrice ?? 0);
+      const old_price = Number(raw.old_price ?? raw.oldPrice ?? 0);
+
+      const image_link = raw.image_link || raw.imageLink || null;
+      const product_link = raw.product_link || raw.productLink || null;
+      const review_link = raw.review_link || raw.reviewLink || null;
+      const coupon_code = raw.coupon_code || raw.couponCode || null;
+      const shipping_cost = raw.shipping_cost || raw.shippingCost || null;
+      const expire_date = raw.expire_date || raw.expireDate || null;
+      const holiday_tag = raw.holiday_tag || raw.holidayTag || null;
+
+      let description_es = raw.description_es || "";
+      let notes_es = raw.notes_es || "";
+
+      /* ---------------------------------------------------------
+         AI FULL SEO REWRITE (EN + ES)
+      --------------------------------------------------------- */
+      if (useAI && title.trim()) {
+        try {
+          const res = await fetch(`${baseUrl}/api/generate-description`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title,
+              notes,
+              store: store_name,
+              category,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            // Use rewritten AI text
+            raw.description = data.title_en;
+            raw.notes = data.description_en;
+            description_es = data.title_es;
+            notes_es = data.description_es;
+          } else {
+            // Failover: use manual English, copy to Spanish if empty
+            if (!description_es) description_es = raw.description;
+            if (!notes_es) notes_es = raw.notes;
+          }
+        } catch (err) {
+          console.error("AI bulk rewrite failed:", err);
+          // Full fallback
+          if (!description_es) description_es = raw.description;
+          if (!notes_es) notes_es = raw.notes;
+        }
+      } else {
+        // AI disabled → copy English to Spanish if ES missing
+        if (!description_es) description_es = title;
+        if (!notes_es) notes_es = notes;
       }
 
-      // Deal level
-      let dealLevel = "";
-      if (percentDiff >= 40 && percentDiff < 51) dealLevel = "Blistering deal";
-      else if (percentDiff >= 51 && percentDiff < 61) dealLevel = "Scorching deal";
-      else if (percentDiff >= 61 && percentDiff < 71) dealLevel = "Searing deal";
-      else if (percentDiff >= 71) dealLevel = "Flaming deal";
+      /* ---------------------------------------------------------
+         SLUGS + METRICS
+      --------------------------------------------------------- */
+      const metrics = computeMetrics(old_price, current_price);
+      const slug = slugify(raw.description || title || "deal");
+      const slug_es = slugify(description_es || slug);
 
-      // Clean up the deal row for insert
-      const preparedDeal = {
-        description: d.description || "",
-        current_price: currP || null,
-        old_price: oldP || null,
-        price_diff: priceDiff,
-        percent_diff: percentDiff,
-        image_link: d.image_link || null,
-        product_link: d.product_link || null,
-        review_link: d.review_link || null,
-        coupon_code: d.coupon_code || null,
-        shipping_cost: d.shipping_cost || null,
-        notes: d.notes || null,
-        expire_date: d.expire_date?.trim() ? d.expire_date : null,
-        category: d.category || null,
-        store_name: d.store_name || null,
-        deal_level: dealLevel,
-        holiday_tag: d.holiday_tag || null,
+      /* ---------------------------------------------------------
+         FINALIZED ROW
+      --------------------------------------------------------- */
+      const row = {
+        description: raw.description || title,
+        notes: raw.notes || notes,
+        description_es,
+        notes_es,
+
+        current_price,
+        old_price,
+        price_diff: metrics.price_diff,
+        percent_diff: metrics.percent_diff,
+        deal_level: metrics.deal_level,
+
+        store_name,
+        category,
+
+        image_link,
+        product_link,
+        review_link,
+        coupon_code,
+        shipping_cost,
+        expire_date,
+        holiday_tag,
+
+        slug,
+        slug_es,
         published_at: new Date().toISOString(),
       };
 
-      finalDeals.push(preparedDeal);
+      finalRows.push(row);
 
-      /* ----------------------------------------------- */
-      /* Extract URLs from notes                         */
-      /* ----------------------------------------------- */
-      const urls = extractUrls(d.notes || "");
-
+      /* ---------------------------------------------------------
+         Related URLs extraction
+      --------------------------------------------------------- */
+      const urls = extractUrls(row.notes || "");
       for (const url of urls) {
-        const title = await getTitle(url);
-
-        relatedLinksToInsert.push({
-          deal_id_placeholder: true, // temporary placeholder
-          url,
-          title,
-        });
+        linksToInsert.push({ url, deal_id_placeholder: true });
       }
     }
 
-    /* ----------------------------------------------- */
-    /* 1️⃣ Insert ALL deals first                       */
-    /* ----------------------------------------------- */
-    const { data: insertedDeals, error } = await supabaseAdmin
+    /* -------------------------------------------------------------
+       INSERT DEALS FIRST
+    ------------------------------------------------------------- */
+    const { data: inserted, error } = await supabaseAdmin
       .from("deals")
-      .insert(finalDeals)
+      .insert(finalRows)
       .select();
 
     if (error) throw error;
 
-    // Map deal IDs back to related links
-    let idx = 0;
-    for (let i = 0; i < insertedDeals.length; i++) {
-      const deal = insertedDeals[i];
+    /* -------------------------------------------------------------
+       MAP DEAL IDS TO RELATED LINKS
+    ------------------------------------------------------------- */
+    let pos = 0;
+    for (let i = 0; i < inserted.length; i++) {
+      const deal = inserted[i];
+      const urls = extractUrls(finalRows[i].notes || "");
 
-      // Count how many links belonged to this deal
-      const urls = extractUrls(deals[i].notes || "");
-
-      for (let u = 0; u < urls.length; u++) {
-       (relatedLinksToInsert[idx] as any).deal_id = deal.id;
-
-        delete (relatedLinksToInsert[idx] as any).deal_id_placeholder;
-
-        idx++;
+      for (let j = 0; j < urls.length; j++) {
+        linksToInsert[pos].deal_id = deal.id;
+        delete linksToInsert[pos].deal_id_placeholder;
+        pos++;
       }
     }
 
-    /* ----------------------------------------------- */
-    /* 2️⃣ Insert related links                        */
-    /* ----------------------------------------------- */
-    if (relatedLinksToInsert.length > 0) {
-      const { error: relErr } = await supabaseAdmin
-        .from("deal_related_links")
-        .insert(relatedLinksToInsert);
-
-      if (relErr) console.error("❌ Related links insert failed:", relErr);
+    if (linksToInsert.length > 0) {
+      await supabaseAdmin.from("deal_related_links").insert(linksToInsert);
     }
 
-    /* ----------------------------------------------- */
-    /* Return response                                 */
-    /* ----------------------------------------------- */
     return NextResponse.json(
       {
         ok: true,
-        insertedDeals: insertedDeals.length,
-        insertedLinks: relatedLinksToInsert.length,
+        inserted: inserted.length,
+        links: linksToInsert.length,
       },
-      { status: 201 }
+      { status: 200 }
     );
   } catch (err: any) {
-    console.error("Bulk upload error:", err);
+    console.error("❌ BULK UPLOAD ERROR:", err);
     return NextResponse.json(
       { error: err.message || "Unknown error during bulk upload." },
       { status: 500 }
