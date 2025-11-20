@@ -20,7 +20,7 @@ export default function MobileHeader({
   const [query, setQuery] = useState("");
 
   const { lang, setLang, hydrated, hydrate } = useLangStore();
-
+const [searchValue, setSearchValue] = useState("");
 useEffect(() => {
   hydrate();
 }, []);
@@ -49,7 +49,7 @@ if (!hydrated) return null;
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                handleSearch();
+                onSearch?.(searchValue);
               }
             }}
             placeholder="Search deals..."
@@ -57,7 +57,7 @@ if (!hydrated) return null;
           />
 
           <button
-            onClick={handleSearch}
+            onClick={() => onSearch?.(searchValue)}
             className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
           >
             Go

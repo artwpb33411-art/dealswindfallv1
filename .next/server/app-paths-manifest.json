@@ -25,6 +25,7 @@
   "/api/scrape/route": "app/api/scrape/route.js",
   "/api/track/route": "app/api/track/route.js",
   "/deals/[slug]/page": "app/deals/[slug]/page.js",
+  "/es/deals/[slug]/page": "app/es/deals/[slug]/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/login/page": "app/login/page.js",
   "/page": "app/page.js",

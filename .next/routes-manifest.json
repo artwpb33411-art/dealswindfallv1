@@ -59,6 +59,14 @@
         "nxtPslug": "nxtPslug"
       },
       "namedRegex": "^/deals/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/es/deals/[slug]",
+      "regex": "^/es/deals/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/es/deals/(?<nxtPslug>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [

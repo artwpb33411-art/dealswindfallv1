@@ -25,6 +25,7 @@
   "/api/scrape/route": "/api/scrape",
   "/api/track/route": "/api/track",
   "/deals/[slug]/page": "/deals/[slug]",
+  "/es/deals/[slug]/page": "/es/deals/[slug]",
   "/favicon.ico/route": "/favicon.ico",
   "/login/page": "/login",
   "/page": "/",
