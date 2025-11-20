@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { useLangStore } from "@/lib/languageStore";
 import Image from "next/image";
 
-export default function DealClient({ deal }) {
+export default function DealClient({ deal }: { deal: any }) {
+
   const { lang, hydrated, hydrate } = useLangStore();
 
   useEffect(() => {
