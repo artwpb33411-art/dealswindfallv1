@@ -101,6 +101,12 @@
       "namedRegex": "^/api/admin/analytics(?:/)?$"
     },
     {
+      "page": "/api/admin/reprocess-deals",
+      "regex": "^/api/admin/reprocess\\-deals(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/reprocess\\-deals(?:/)?$"
+    },
+    {
       "page": "/api/ai-generate-seo",
       "regex": "^/api/ai\\-generate\\-seo(?:/)?$",
       "routeKeys": {},
@@ -153,6 +159,18 @@
       "regex": "^/api/deals/bulk(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/deals/bulk(?:/)?$"
+    },
+    {
+      "page": "/api/deals/export",
+      "regex": "^/api/deals/export(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/deals/export(?:/)?$"
+    },
+    {
+      "page": "/api/debug-env",
+      "regex": "^/api/debug\\-env(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/debug\\-env(?:/)?$"
     },
     {
       "page": "/api/fetch-title",

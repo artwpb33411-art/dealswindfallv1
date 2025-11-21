@@ -5,7 +5,6 @@ import { useLangStore } from "@/lib/languageStore";
 import Image from "next/image";
 
 export default function DealClient({ deal }: { deal: any }) {
-
   const { lang, hydrated, hydrate } = useLangStore();
 
   useEffect(() => {
@@ -54,12 +53,55 @@ export default function DealClient({ deal }: { deal: any }) {
         </div>
       )}
 
+      {/* ⭐ NEW INFO BOX ⭐ */}
+      <div className="bg-gray-50 p-4 rounded-md shadow mb-6">
+        <h2 className="text-lg font-semibold mb-3 text-gray-800">Deal Summary</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <p>
+            <span className="font-medium text-gray-700">Current Price:</span>{" "}
+            <span className="text-green-700 font-semibold">
+              ${deal.current_price ?? "N/A"}
+            </span>
+          </p>
+
+          <p>
+            <span className="font-medium text-gray-700">Old Price:</span>{" "}
+            <span className="text-red-600 font-semibold">
+              {deal.old_price ? `$${deal.old_price}` : "N/A"}
+            </span>
+          </p>
+
+          <p>
+            <span className="font-medium text-gray-700">Percent Difference:</span>{" "}
+            <span className="text-blue-700 font-semibold">
+              {deal.percent_diff ? `${deal.percent_diff}%` : "N/A"}
+            </span>
+          </p>
+
+          <p>
+            <span className="font-medium text-gray-700">Store:</span>{" "}
+            <span className="font-semibold">{deal.store_name ?? "N/A"}</span>
+          </p>
+        </div>
+
+        {/* Purchase Link */}
+        {deal.product_link && (
+          <a
+            href={deal.product_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block mt-4 w-full text-center bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+          >
+            🔗 Go to Purchase Page
+          </a>
+        )}
+      </div>
+
       {/* NOTES / DESCRIPTION */}
       <p className="text-gray-800 leading-relaxed mb-8 whitespace-pre-line">
         {notes}
       </p>
-
-      {/* ❌ Remove language links for Option A */}
     </main>
   );
 }

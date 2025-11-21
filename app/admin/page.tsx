@@ -1,5 +1,5 @@
 "use client";
-
+import ExportDeals from "@/components/admin/ExportDeals";
 import { useState } from "react";
 import DealsForm from "@/components/admin/DealsForm";
 import CatalogForm from "@/components/admin/CatalogForm";
@@ -64,20 +64,31 @@ export default function AdminPage() {
 
       {/* Tab Content */}
       {activeTab === "deals" && (
-	   <div>
-		<DealsForm />
-		 <BulkUploadDeals />
-		 <a
-  href="/templates/deals-template.xlsx"
-  download
-  className="ml-3 text-blue-600 underline text-sm hover:text-blue-800"
->
-  Download Template
-</a>
+  <div>
+    <DealsForm />
 
-		<DealsList />
-	   </div>
-	 )}
+    {/* Grid layout for Bulk Upload + Export */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+      <div>
+        <BulkUploadDeals />
+        <a
+          href="/templates/deals-template.xlsx"
+          download
+          className="ml-1 text-blue-600 underline text-sm hover:text-blue-800"
+        >
+          Download Template
+        </a>
+      </div>
+
+      <ExportDeals />
+    </div>
+
+    {/* Deals List */}
+    <div className="mt-8">
+      <DealsList />
+    </div>
+  </div>
+)}
 
       {activeTab === "catalogs" && (
   <div>

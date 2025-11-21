@@ -111,27 +111,31 @@ if (!hydrated) return null;
             </button>
 
             {/* ⭐ Language Switcher ⭐ */}
-            <div className="flex items-center gap-1 border rounded-md px-2 py-0.5">
-              <button
-                onClick={() => setLang("en")}
-                className={`text-xs px-1 ${
-                  lang === "en" ? "text-blue-600 font-semibold" : "text-gray-600"
-                }`}
-              >
-                EN
-              </button>
+           {/* ⭐ Language Switcher with Flags ⭐ */}
+<div className="flex items-center gap-2 border rounded-md px-2 py-1">
 
-              <span className="text-gray-400">|</span>
+  {/* English Flag */}
+  <img
+    src="/flags/us.png"
+    alt="English"
+    onClick={() => setLang("en")}
+    className={`w-6 h-4 cursor-pointer ${
+      lang === "en" ? "ring-2 ring-blue-500 rounded-sm" : ""
+    }`}
+  />
 
-              <button
-                onClick={() => setLang("es")}
-                className={`text-xs px-1 ${
-                  lang === "es" ? "text-blue-600 font-semibold" : "text-gray-600"
-                }`}
-              >
-                ES
-              </button>
-            </div>
+  {/* Spanish Flag */}
+  <img
+    src="/flags/es.png"
+    alt="Español"
+    onClick={() => setLang("es")}
+    className={`w-6 h-4 cursor-pointer ${
+      lang === "es" ? "ring-2 ring-blue-500 rounded-sm" : ""
+    }`}
+  />
+
+</div>
+
           </div>
         </>
       )}
