@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_VERCEL_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "") ||
+    `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` ||
     "http://localhost:3000";
 
   const { data: deals, error } = await supabaseAdmin
@@ -16,12 +16,7 @@ export async function GET() {
     console.error("Sitemap fetch error:", error);
   }
 
-  const staticPages = [
-    "",
-    "/about",
-    "/contact",
-    "/categories",
-  ];
+  const staticPages = ["", "/about", "/contact", "/categories"];
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
   xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
@@ -35,12 +30,15 @@ export async function GET() {
   </url>`;
   }
 
-  // Deals (ID + slug pattern)
+  // Deals
   if (deals) {
     for (const d of deals) {
       const lastmod = d.published_at || new Date().toISOString();
 
-      // English URL: /deals/<id>-<slug>
+      // Skip deals with bad slugs
+      if (!d.slug) continue;
+
+      // English version
       xml += `
   <url>
     <loc>${baseUrl}/deals/${d.id}-${d.slug}</loc>
@@ -48,7 +46,7 @@ export async function GET() {
     <priority>0.80</priority>
   </url>`;
 
-      // Spanish URL: /es/deals/<id>-<slug_es>
+      // Spanish version
       if (d.slug_es) {
         xml += `
   <url>

@@ -16,6 +16,21 @@ function extractUrls(text: string) {
   return text?.match(/https?:\/\/[^\s]+/g) || [];
 }
 
+/* -------------------------------------------------------------
+   SANITIZE TEXT (Fixes all Excel weird characters)
+------------------------------------------------------------- */
+function sanitizeText(text: string) {
+  if (!text) return "";
+
+  return text
+    .replace(/[\u201C\u201D]/g, '"')    // smart quotes → "
+    .replace(/[\u2018\u2019]/g, "'")   // curly apostrophes → '
+    .replace(/[\u2013\u2014]/g, "-")   // en/em dash → hyphen
+    .replace(/[™®]/g, "")              // remove trademark symbols
+    .replace(/\s+/g, " ")              // collapse spaces
+    .trim();
+}
+
 function computeMetrics(oldP: number, currP: number) {
   if (!oldP || !currP || oldP <= 0 || currP <= 0) {
     return { price_diff: null, percent_diff: null, deal_level: null };
@@ -34,12 +49,15 @@ function computeMetrics(oldP: number, currP: number) {
 }
 
 function getBaseUrl() {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_VERCEL_URL ||
-    "http://localhost:3000"
-  );
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
 }
+
 
 /* -------------------------------------------------------------
    BULK API ROUTE
@@ -57,12 +75,17 @@ export async function POST(req: Request) {
     const linksToInsert: any[] = [];
 
     /* ---------------------------------------------------------
-       LOOP THROUGH EACH DEAL
+       LOOP EACH DEAL
     --------------------------------------------------------- */
     for (const raw of deals) {
-      // Normalize incoming columns from Excel/CSV
-      const title = raw.description || raw.title || raw.Title || "";
-      const notes = raw.notes || raw.description_text || raw.Description || "";
+      // Normalize + sanitize text
+      const title = sanitizeText(
+        raw.description || raw.title || raw.Title || ""
+      );
+
+      const notes = sanitizeText(
+        raw.notes || raw.description_text || raw.Description || ""
+      );
 
       const store_name = raw.store_name || raw.store || raw.Store || null;
       const category = raw.category || raw.Category || null;
@@ -85,39 +108,58 @@ export async function POST(req: Request) {
          AI FULL SEO REWRITE (EN + ES)
       --------------------------------------------------------- */
       if (useAI && title.trim()) {
-        try {
-          const res = await fetch(`${baseUrl}/api/generate-description`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              title,
-              notes,
-              store: store_name,
-              category,
-            }),
-          });
+       try {
+console.log("🧪 AI REQUEST BODY:", {
+  title,
+  notes,
+  storeName: store_name,
+  category,
+  currentPrice: current_price,
+  oldPrice: old_price,
+  shippingCost: shipping_cost,
+  couponCode: coupon_code,
+  holidayTag: holiday_tag,
+  productLink: product_link,
+});
 
-          const data = await res.json();
+const res = await fetch(`${baseUrl}/api/ai-generate-seo`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    title,
+    notes,
+    storeName: store_name,
+    category,
+    currentPrice: current_price,
+    oldPrice: old_price,
+    shippingCost: shipping_cost,
+    couponCode: coupon_code,
+    holidayTag: holiday_tag,
+    productLink: product_link,
+  }),
+});
+
+const data = await res.json();
+
+console.log("🧪 AI RESPONSE:", data);
+
 
           if (data.success) {
-            // Use rewritten AI text
             raw.description = data.title_en;
             raw.notes = data.description_en;
             description_es = data.title_es;
             notes_es = data.description_es;
           } else {
-            // Failover: use manual English, copy to Spanish if empty
-            if (!description_es) description_es = raw.description;
-            if (!notes_es) notes_es = raw.notes;
+            if (!description_es) description_es = title;
+            if (!notes_es) notes_es = notes;
           }
+
         } catch (err) {
-          console.error("AI bulk rewrite failed:", err);
-          // Full fallback
-          if (!description_es) description_es = raw.description;
-          if (!notes_es) notes_es = raw.notes;
+          console.error("❌ Bulk AI error:", err);
+          if (!description_es) description_es = title;
+          if (!notes_es) notes_es = notes;
         }
       } else {
-        // AI disabled → copy English to Spanish if ES missing
         if (!description_es) description_es = title;
         if (!notes_es) notes_es = notes;
       }
@@ -172,7 +214,7 @@ export async function POST(req: Request) {
     }
 
     /* -------------------------------------------------------------
-       INSERT DEALS FIRST
+       INSERT INTO SUPABASE
     ------------------------------------------------------------- */
     const { data: inserted, error } = await supabaseAdmin
       .from("deals")
@@ -182,7 +224,7 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     /* -------------------------------------------------------------
-       MAP DEAL IDS TO RELATED LINKS
+       MAP LINKS TO DEAL IDs
     ------------------------------------------------------------- */
     let pos = 0;
     for (let i = 0; i < inserted.length; i++) {
@@ -208,6 +250,7 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
+
   } catch (err: any) {
     console.error("❌ BULK UPLOAD ERROR:", err);
     return NextResponse.json(

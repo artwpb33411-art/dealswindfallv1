@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+});
+
 /**
  * Fallback if AI unavailable or returns invalid JSON
  */
@@ -19,19 +23,6 @@ function fallbackSEO(title: string, notes: string) {
 
 export async function POST(req: Request) {
   try {
-    // ⭐ Move OpenAI client *inside POST()* so Vercel sees env var
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    if (!process.env.OPENAI_API_KEY) {
-      console.error("API KEY missing");
-      return NextResponse.json(
-        { error: "Missing OpenAI API Key" },
-        { status: 500 }
-      );
-    }
-
     const body = await req.json();
 
     const englishTitle = body.title || body.description || "";
@@ -39,7 +30,7 @@ export async function POST(req: Request) {
 
     if (!englishTitle.trim()) {
       return NextResponse.json(
-        { error: "Missing English Title" },
+        { success: false, error: "Missing English Title" },
         { status: 400 }
       );
     }
@@ -54,12 +45,18 @@ Shipping: ${body.shippingCost || "N/A"}
 Coupon: ${body.couponCode || "None"}
 Holiday/Event: ${body.holidayTag || "None"}
 Product Link: ${body.productLink || "None"}
-`.trim();
+    `.trim();
 
-    const ai = await openai.responses.create({
-      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      input: `
-Rewrite this product for a deals website and return JSON:
+    // -------------------------------------------
+    //  GPT-4o-mini (Chat Completions API)
+    // -------------------------------------------
+    const ai = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: `
+Rewrite this product for a deals website and return ONLY valid JSON:
 
 {
   "title_en": "",
@@ -70,28 +67,41 @@ Rewrite this product for a deals website and return JSON:
 
 Product Data:
 ${productInfo}
-`,
-      max_output_tokens: 900,
+        `.trim(),
+        },
+      ],
+      max_tokens: 900,
     });
 
-    let raw = ai.output_text || "";
+    let raw = ai.choices?.[0]?.message?.content || "";
 
-    raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-    let parsed: any = null;
-
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return NextResponse.json(fallbackSEO(englishTitle, englishNotes));
+    if (!raw || typeof raw !== "string") {
+      const fallback = fallbackSEO(englishTitle, englishNotes);
+      return NextResponse.json({ success: false, ...fallback });
     }
 
-    return NextResponse.json(parsed, { status: 200 });
+    // Remove markdown fences
+    raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (err) {
+      console.error("JSON parsing failed:", raw);
+      const fallback = fallbackSEO(englishTitle, englishNotes);
+      return NextResponse.json({ success: false, ...fallback });
+    }
+
+    return NextResponse.json(
+      { success: true, ...parsed },
+      { status: 200 }
+    );
 
   } catch (err: any) {
     console.error("AI ERROR:", err);
+    const fallback = fallbackSEO("Untitled", "");
     return NextResponse.json(
-      { error: err.message || "AI generation failed" },
+      { success: false, ...fallback },
       { status: 500 }
     );
   }

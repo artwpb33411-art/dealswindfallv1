@@ -84,28 +84,35 @@ const generateAI = async () => {
   setMsg("⏳ Rewriting English & Spanish titles and descriptions...");
 
   try {
-    const res = await fetch("/api/generate-description", {
+    const res = await fetch("/api/ai-generate-seo", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: form.description,
         notes: form.notes,
-        store: form.storeName,
+        storeName: form.storeName,
         category: form.category,
+        currentPrice: form.currentPrice,
+        oldPrice: form.oldPrice,
+        shippingCost: form.shippingCost,
+        couponCode: form.couponCode,
+        holidayTag: form.holidayTag,
+        productLink: form.productLink,
       }),
     });
 
     const data = await res.json();
 
+    // Fallback or AI failure
     if (!data.success) {
-      // fallback
       setForm(prev => ({
         ...prev,
-        description_es: prev.description_es || prev.description,
-        notes_es: prev.notes_es || prev.notes,
+        description_es: data.title_es || prev.description,
+        notes_es: data.description_es || prev.notes,
       }));
       setMsg("⚠️ AI unavailable — kept English text, copied to Spanish.");
     } else {
+      // Success
       setForm(prev => ({
         ...prev,
         description: data.title_en,
@@ -115,6 +122,7 @@ const generateAI = async () => {
       }));
       setMsg("✅ AI generated full English & Spanish SEO content!");
     }
+
   } catch (err: any) {
     console.error(err);
     setMsg("❌ AI error: " + err.message);
@@ -122,7 +130,6 @@ const generateAI = async () => {
 
   setFetchingAI(false);
 };
-
 
 
   // ---------------------------------------------------

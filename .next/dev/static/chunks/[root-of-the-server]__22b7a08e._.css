@@ -586,6 +586,10 @@
 @layer components;
 
 @layer utilities {
+  .collapse {
+    visibility: collapse;
+  }
+
   .sr-only {
     clip-path: inset(50%);
     white-space: nowrap;
