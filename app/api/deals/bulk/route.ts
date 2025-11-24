@@ -64,7 +64,30 @@ function getBaseUrl() {
 ------------------------------------------------------------- */
 export async function POST(req: Request) {
   try {
-    const { deals, useAI } = await req.json();
+    let deals = [];
+let useAI = false;
+
+try {
+  // Try JSON first (when frontend sends JSON)
+  const body = await req.json();
+  deals = body.deals;
+  useAI = body.useAI;
+} catch (err) {
+  // If JSON fails, try formdata (happens with file uploads)
+  const form = await req.formData();
+  const file = form.get("file");
+
+  if (!file) {
+    return NextResponse.json(
+      { error: "Invalid upload format. Expected JSON or file upload." },
+      { status: 400 }
+    );
+  }
+
+  // Parse CSV/Excel here...
+  // I can write that code if you tell me the file format.
+}
+
 
     if (!Array.isArray(deals) || deals.length === 0) {
       return NextResponse.json({ error: "No deals provided." }, { status: 400 });

@@ -1,4 +1,5 @@
 "use client";
+import BlogManager from "@/components/admin/BlogManager";
 import ExportDeals from "@/components/admin/ExportDeals";
 import { useState } from "react";
 import DealsForm from "@/components/admin/DealsForm";
@@ -45,7 +46,9 @@ export default function AdminPage() {
           { id: "coupons", label: "🎟️ Coupons" },
 		     { id: "events", label: "📅 Seasonal Events" }, // ✅ new
 			  { id: "analytics", label: "📊 Analytics" }, // ✅ new
-			  { id: "settings", label: "⚙️ Settings" }
+			  { id: "settings", label: "⚙️ Settings" },
+        { id: "blog", label: "📝 Blog" }
+
 
         ].map((tab) => (
           <button
@@ -121,6 +124,13 @@ export default function AdminPage() {
           <AutoPublishSettings />
         </div>
       )}
+
+      {activeTab === "blog" && (
+  <div>
+    <BlogManager />
+  </div>
+)}
+
 	  
 	  
       </div>

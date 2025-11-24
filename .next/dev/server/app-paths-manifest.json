@@ -1,8 +1,14 @@
 {
+  "/admin/blog/new/page": "app/admin/blog/new/page.js",
+  "/admin/blog/page": "app/admin/blog/page.js",
   "/admin/page": "app/admin/page.js",
-  "/api/admin/analytics/route": "app/api/admin/analytics/route.js",
-  "/api/auto-publish-settings/route": "app/api/auto-publish-settings/route.js",
+  "/api/admin/blog/list/route": "app/api/admin/blog/list/route.js",
+  "/api/admin/blog/route": "app/api/admin/blog/route.js",
+  "/api/blog/generate/route": "app/api/blog/generate/route.js",
   "/api/deals/route": "app/api/deals/route.js",
   "/api/holiday-events/route": "app/api/holiday-events/route.js",
+  "/api/track/route": "app/api/track/route.js",
+  "/blog/[slug]/page": "app/blog/[slug]/page.js",
+  "/blog/page": "app/blog/page.js",
   "/page": "app/page.js"
 }

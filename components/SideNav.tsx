@@ -1,5 +1,5 @@
 "use client";
-import { Home, Flame, Info, Shield, Mail } from "lucide-react";
+import { Home, Flame, Info, Shield, Mail, FileText  } from "lucide-react";
 import { useState } from "react";
 
 export default function SideNav({
@@ -19,6 +19,15 @@ export default function SideNav({
     { id: "about", name: "About", icon: <Info size={20} />, onClick: () => onSelectPage("about") },
     { id: "privacy", name: "Privacy", icon: <Shield size={20} />, onClick: () => onSelectPage("privacy") },
     { id: "contact", name: "Contact", icon: <Mail size={20} />, onClick: () => onSelectPage("contact") },
+{ 
+  id: "blog", 
+  name: "Blog", 
+  icon: <FileText size={20} />, 
+  onClick: () => window.location.href = "/blog" 
+},
+
+
+
   ];
 
   return (

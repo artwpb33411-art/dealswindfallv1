@@ -26,9 +26,10 @@ if (!hydrated) return null;
         
         {/* Left: Logo */}
         <div
-          className="flex items-center gap-2 shrink-0 cursor-pointer"
-          onClick={onHome}
-        >
+  className="flex items-center gap-2 shrink-0 cursor-pointer"
+  onClick={() => { window.location.href = "/" }}
+>
+
           <Image
             src="/dealswindfall-logoA.png"
             alt="DealsWindfall"

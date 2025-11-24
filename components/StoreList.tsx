@@ -79,12 +79,12 @@ export default function StoreList({
       {holidayTags.map((event) => (
         <button
           key={event.id}
-          onClick={() => onSelectHoliday?.(event.name)}
+          onClick={() => onSelectHoliday?.(event.slug)}
           className={`
             px-4 py-1.5 rounded-full border shadow-sm transition 
             whitespace-nowrap text-sm 
             hover:-translate-y-1 hover:shadow-lg active:scale-95
-            ${selectedHoliday === event.name
+            ${selectedHoliday === event.slug
               ? "bg-blue-600 text-white border-blue-600"
               : "bg-white text-gray-700 border-gray-300"
             }

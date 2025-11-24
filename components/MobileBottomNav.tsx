@@ -1,5 +1,5 @@
 "use client";
-import { Home, Flame, Store, Info, Shield, Mail } from "lucide-react";
+import { Home, Flame, Store, Info, Shield, Mail, FileText } from "lucide-react";
 
 export default function MobileBottomNav({
   onHome,
@@ -35,6 +35,12 @@ export default function MobileBottomNav({
       <button onClick={onPrivacy} className={`navbtn ${active==="privacy" && "text-blue-600"}`}>
         <Shield size={22} />
       </button>
+<button
+  onClick={() => window.location.href = "/blog"}
+  className={`navbtn ${active==="blog" && "text-blue-600"}`}
+>
+  <FileText size={22} />
+</button>
 
       <button onClick={onContact} className={`navbtn ${active==="contact" && "text-blue-600"}`}>
         <Mail size={22} />

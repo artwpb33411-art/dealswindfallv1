@@ -21,6 +21,14 @@
   },
   "dynamicRoutes": [
     {
+      "page": "/admin/blog/edit/[id]",
+      "regex": "^/admin/blog/edit/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/admin/blog/edit/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
       "page": "/api/deals/[id]",
       "regex": "^/api/deals/([^/]+?)(?:/)?$",
       "routeKeys": {
@@ -51,6 +59,14 @@
         "nxtPslug": "nxtPslug"
       },
       "namedRegex": "^/api/es/deals/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/blog/[slug]",
+      "regex": "^/blog/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/blog/(?<nxtPslug>[^/]+?)(?:/)?$"
     },
     {
       "page": "/deals/[slug]",
@@ -95,10 +111,46 @@
       "namedRegex": "^/admin(?:/)?$"
     },
     {
+      "page": "/admin/blog",
+      "regex": "^/admin/blog(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/blog(?:/)?$"
+    },
+    {
+      "page": "/admin/blog/new",
+      "regex": "^/admin/blog/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/blog/new(?:/)?$"
+    },
+    {
       "page": "/api/admin/analytics",
       "regex": "^/api/admin/analytics(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/admin/analytics(?:/)?$"
+    },
+    {
+      "page": "/api/admin/blog",
+      "regex": "^/api/admin/blog(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/blog(?:/)?$"
+    },
+    {
+      "page": "/api/admin/blog/get",
+      "regex": "^/api/admin/blog/get(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/blog/get(?:/)?$"
+    },
+    {
+      "page": "/api/admin/blog/list",
+      "regex": "^/api/admin/blog/list(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/blog/list(?:/)?$"
+    },
+    {
+      "page": "/api/admin/blog/new",
+      "regex": "^/api/admin/blog/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/blog/new(?:/)?$"
     },
     {
       "page": "/api/admin/reprocess-deals",
@@ -129,6 +181,12 @@
       "regex": "^/api/auto\\-publish\\-settings(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/auto\\-publish\\-settings(?:/)?$"
+    },
+    {
+      "page": "/api/blog/generate",
+      "regex": "^/api/blog/generate(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/blog/generate(?:/)?$"
     },
     {
       "page": "/api/catalogs",
@@ -219,6 +277,12 @@
       "regex": "^/api/track(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/track(?:/)?$"
+    },
+    {
+      "page": "/blog",
+      "regex": "^/blog(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/blog(?:/)?$"
     },
     {
       "page": "/favicon.ico",

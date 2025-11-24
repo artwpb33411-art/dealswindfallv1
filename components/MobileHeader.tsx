@@ -92,13 +92,12 @@ if (!hydrated) return null;
 
           {/* Logo */}
           <img
-            src="/dealswindfall-logoA.png"
-            alt="DealsWindfall"
-            onClick={() => {
-              if (onGoHome) onGoHome();
-            }}
-            className="h-9 max-h-9 object-contain translate-y-[1px] cursor-pointer active:scale-[0.97] transition"
-          />
+  src="/dealswindfall-logoA.png"
+  alt="DealsWindfall"
+  onClick={() => { window.location.href = "/" }}
+  className="h-9 max-h-9 object-contain translate-y-[1px] cursor-pointer active:scale-[0.97] transition"
+/>
+
 
           {/* Right section with Search + Language Switcher */}
           <div className="flex items-center gap-3">

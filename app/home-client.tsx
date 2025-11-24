@@ -114,7 +114,8 @@ export default function HomeClient() {
     setShowHotDeals(false);
     setStaticPage(null);
     setIsDealDetailOpen(false);
-    setIsStoreListOpen(false);
+  //  setIsStoreListOpen(false);
+	if (isStoreListOpen) closeStoreList();
   };
 
   const handleSelectCategory = (cat: string) => {
@@ -129,6 +130,7 @@ export default function HomeClient() {
     setShowHotDeals(false);
     setStaticPage(null);
     setIsDealDetailOpen(false);
+	if (isStoreListOpen) closeStoreList();
   };
 
   const closeStoreList = () => {
