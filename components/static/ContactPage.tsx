@@ -5,16 +5,7 @@ import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { useLangStore } from "@/lib/languageStore";
 
 export default function ContactPage() {
-  // Language system
-  const { lang, hydrated, hydrate } = useLangStore();
-
-  useEffect(() => {
-    hydrate();
-  }, []);
-
-  if (!hydrated) return null;
-
-  // Form state
+  // Always initialize states first — BEFORE any early return
   const [form, setForm] = useState({
     name: "",
     company: "",
@@ -29,6 +20,35 @@ export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
+  // Language system
+  const { lang, hydrated, hydrate } = useLangStore();
+
+  useEffect(() => {
+    hydrate();
+  }, []);
+
+  // SAFE: Hooks already executed, so early return is allowed.
+  if (!hydrated) return null;
+
+  // ------------------- SUCCESS MESSAGE -------------------
+  if (sent) {
+    return (
+      <div className="px-6 py-10 text-center">
+        <h2 className="text-2xl font-semibold text-green-600 mb-3">
+          {lang === "en"
+            ? "Message Sent Successfully!"
+            : "¡Mensaje enviado con éxito!"}
+        </h2>
+        <p className="text-gray-600">
+          {lang === "en"
+            ? "We will get back to you shortly."
+            : "Nos pondremos en contacto con usted pronto."}
+        </p>
+      </div>
+    );
+  }
+
+  // ------------------- FORM HANDLERS -------------------
   const handleChange = (e: any) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -38,7 +58,6 @@ export default function ContactPage() {
     e.preventDefault();
     setError("");
 
-    // Validation
     if (!form.name || !form.email || !form.reason || !form.message) {
       setError(
         lang === "en"
@@ -74,29 +93,7 @@ export default function ContactPage() {
     }
   };
 
-  /* --------------------------------------------------
-     SUCCESS MESSAGE (when form is submitted)
-  -------------------------------------------------- */
-  if (sent) {
-    return (
-      <div className="px-6 py-10 text-center">
-        <h2 className="text-2xl font-semibold text-green-600 mb-3">
-          {lang === "en"
-            ? "Message Sent Successfully!"
-            : "¡Mensaje enviado con éxito!"}
-        </h2>
-        <p className="text-gray-600">
-          {lang === "en"
-            ? "We will get back to you shortly."
-            : "Nos pondremos en contacto con usted pronto."}
-        </p>
-      </div>
-    );
-  }
-
-  /* --------------------------------------------------
-     FORM UI (MAIN PAGE)
-  -------------------------------------------------- */
+  // ------------------- FORM UI -------------------
   return (
     <div className="overflow-y-auto custom-scroll min-h-[calc(100vh-56px)] px-6 py-6 pb-40">
       <h1 className="text-2xl font-semibold text-gray-800 mb-4">
@@ -116,7 +113,6 @@ export default function ContactPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-
         {/* Full Name */}
         <div>
           <label className="text-sm font-medium text-gray-700">
@@ -176,7 +172,7 @@ export default function ContactPage() {
           />
         </div>
 
-        {/* Reason dropdown */}
+        {/* Reason */}
         <div>
           <label className="text-sm font-medium text-gray-700">
             {lang === "en" ? "Reason" : "Motivo"}{" "}
@@ -233,7 +229,7 @@ export default function ContactPage() {
           onExpire={() => setCaptchaToken("")}
         />
 
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}

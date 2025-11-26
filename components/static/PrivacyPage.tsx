@@ -42,6 +42,12 @@ export default function PrivacyPage() {
             By using our site, you agree to our privacy practices as outlined here. You
             can contact us anytime for questions or data removal requests.
           </p>
+		  
+		  <p className="text-[14px] mb-2">
+            DealsWindfall does not store any Facebook user data.
+If you want to request data deletion, please use our contact form:
+https://www.dealswindfall.com/contact
+          </p>
         </>
       ) : (
         <>
@@ -72,6 +78,13 @@ export default function PrivacyPage() {
             Al utilizar nuestro sitio, usted acepta nuestras prácticas de privacidad tal
             como se describen aquí. Puede contactarnos en cualquier momento para hacer
             preguntas o solicitar la eliminación de sus datos.
+          </p>
+		  
+		  <p className="text-[14px] mb-2">
+            DealsWindfall no almacena ningún dato de usuario de Facebook.
+Si desea solicitar la eliminación de datos, utilice nuestro formulario de contacto:
+https://www.dealswindfall.com/contact
+
           </p>
         </>
       )}

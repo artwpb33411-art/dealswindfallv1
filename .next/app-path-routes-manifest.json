@@ -1,6 +1,7 @@
 {
   "/_global-error/page": "/_global-error",
   "/_not-found/page": "/_not-found",
+  "/about/page": "/about",
   "/admin/blog/edit/[id]/page": "/admin/blog/edit/[id]",
   "/admin/blog/new/page": "/admin/blog/new",
   "/admin/blog/page": "/admin/blog",
@@ -37,11 +38,13 @@
   "/api/track/route": "/api/track",
   "/blog/[slug]/page": "/blog/[slug]",
   "/blog/page": "/blog",
+  "/contact/page": "/contact",
   "/deals/[slug]/page": "/deals/[slug]",
   "/es/deals/[slug]/page": "/es/deals/[slug]",
   "/favicon.ico/route": "/favicon.ico",
   "/login/page": "/login",
   "/page": "/",
+  "/privacy/page": "/privacy",
   "/robots.txt/route": "/robots.txt",
   "/sitemap.xml/route": "/sitemap.xml"
 }
