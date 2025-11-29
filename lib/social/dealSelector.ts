@@ -7,9 +7,10 @@ const supabase = createClient(
 );
 
 export type SelectedDeal = {
-  id: string;
-  title: string;
-  price: number | null;
+  id: number;
+  title: string;        // English title
+  description: string;  // English notes/description
+  price: number | null; // current price
   old_price: number | null;
   store_name: string | null;
   image_url: string | null;
@@ -21,10 +22,20 @@ export async function pickDealFromLastHour(): Promise<SelectedDeal | null> {
 
   const { data, error } = await supabase
     .from("deals")
-    .select("id, title, price, old_price, store_name, image_url, slug, published_at")
+    .select(`
+      id,
+      description,
+      notes,
+      current_price,
+      old_price,
+      store_name,
+      image_link,
+      slug,
+      published_at
+    `)
     .gte("published_at", oneHourAgo)
     .order("published_at", { ascending: false })
-    .limit(20); // safety
+    .limit(20);
 
   if (error) {
     console.error("pickDealFromLastHour error:", error);
@@ -33,17 +44,17 @@ export async function pickDealFromLastHour(): Promise<SelectedDeal | null> {
 
   if (!data || data.length === 0) return null;
 
-  // Strategy: random pick among those (you can change later)
-  const idx = Math.floor(Math.random() * data.length);
-  const d = data[idx];
+  // Choose 1 from the recent deals
+  const deal = data[Math.floor(Math.random() * data.length)];
 
   return {
-    id: d.id,
-    title: d.title,
-    price: d.price,
-    old_price: d.old_price,
-    store_name: d.store_name,
-    image_url: d.image_url,
-    slug: d.slug,
+    id: deal.id,
+    title: deal.description || "Hot Deal",
+    description: deal.notes || "",
+    price: deal.current_price || null,
+    old_price: deal.old_price || null,
+    store_name: deal.store_name || null,
+    image_url: deal.image_link || null,
+    slug: deal.slug,
   };
 }
