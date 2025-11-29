@@ -1,6 +1,5 @@
-import { createCanvas, loadImage } from "canvas";
-import type { SelectedDeal } from "./dealSelector";
 import { createCanvas, loadImage, registerFont } from "canvas";
+import type { SelectedDeal } from "./dealSelector";
 import path from "path";
 
 // Register Inter (Regular and Bold)
@@ -13,10 +12,6 @@ registerFont(path.join(process.cwd(), "public/fonts/Inter-Bold.ttf"), {
   family: "Inter",
   weight: "700",
 });
-
-
-
-
 
 
 const WIDTH = 1080;
