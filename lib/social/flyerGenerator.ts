@@ -1,5 +1,23 @@
 import { createCanvas, loadImage } from "canvas";
 import type { SelectedDeal } from "./dealSelector";
+import { createCanvas, loadImage, registerFont } from "canvas";
+import path from "path";
+
+// Register Inter (Regular and Bold)
+registerFont(path.join(process.cwd(), "public/fonts/Inter-Regular.ttf"), {
+  family: "Inter",
+  weight: "400",
+});
+
+registerFont(path.join(process.cwd(), "public/fonts/Inter-Bold.ttf"), {
+  family: "Inter",
+  weight: "700",
+});
+
+
+
+
+
 
 const WIDTH = 1080;
 const HEIGHT = 1350; // Taller layout like real ads
@@ -27,7 +45,8 @@ export async function generateFlyer(
   // Title
   // ----------------------
   ctx.fillStyle = "#111827";
-  ctx.font = "bold 60px Sans-serif";
+  ctx.font = "700 60px Inter";
+
   ctx.textAlign = "center";
 
   const title = deal.title ? deal.title.substring(0, 80) : "Hot Deal!";
@@ -87,12 +106,13 @@ export async function generateFlyer(
 
   // Price text
   ctx.fillStyle = "#111827";
-  ctx.font = "bold 70px Sans-serif";
+  ctx.font = "700 70px Inter";
   ctx.fillText(price, WIDTH / 2, 1110);
 
   // Discount text
   if (discountText) {
-    ctx.font = "bold 40px Sans-serif";
+ ctx.font = "700 40px Inter";
+
     ctx.fillStyle = "#DC2626";
     ctx.fillText(discountText, WIDTH / 2, 1160);
   }
@@ -101,10 +121,13 @@ export async function generateFlyer(
   // Footer: Logo + Website
   // ----------------------
   ctx.fillStyle = "#111827";
-  ctx.font = "bold 40px Sans-serif";
+ ctx.font = "400 50px Inter";
+
 
   // Website
   ctx.textAlign = "right";
+  ctx.font = "400 40px Inter";
+
   ctx.fillText("www.dealswindfall.com", WIDTH - 40, HEIGHT - 50);
 
   // Logo bottom-left
