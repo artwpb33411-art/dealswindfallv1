@@ -279,6 +279,12 @@
       "namedRegex": "^/api/scrape(?:/)?$"
     },
     {
+      "page": "/api/social/hourly",
+      "regex": "^/api/social/hourly(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/social/hourly(?:/)?$"
+    },
+    {
       "page": "/api/track",
       "regex": "^/api/track(?:/)?$",
       "routeKeys": {},

@@ -35,6 +35,7 @@
   "/api/logout/route": "/api/logout",
   "/api/publish-random/route": "/api/publish-random",
   "/api/scrape/route": "/api/scrape",
+  "/api/social/hourly/route": "/api/social/hourly",
   "/api/track/route": "/api/track",
   "/blog/[slug]/page": "/blog/[slug]",
   "/blog/page": "/blog",

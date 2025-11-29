@@ -425,6 +425,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../app/api/social/hourly/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/social/hourly">> = Specific
+  const handler = {} as typeof import("../../../app/api/social/hourly/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../app/api/track/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/track">> = Specific

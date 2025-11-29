@@ -35,6 +35,7 @@
   "/api/logout/route": "app/api/logout/route.js",
   "/api/publish-random/route": "app/api/publish-random/route.js",
   "/api/scrape/route": "app/api/scrape/route.js",
+  "/api/social/hourly/route": "app/api/social/hourly/route.js",
   "/api/track/route": "app/api/track/route.js",
   "/blog/[slug]/page": "app/blog/[slug]/page.js",
   "/blog/page": "app/blog/page.js",
