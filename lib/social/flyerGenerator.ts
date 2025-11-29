@@ -17,6 +17,39 @@ registerFont(path.join(process.cwd(), "public/fonts/Inter-Bold.ttf"), {
 const WIDTH = 1080;
 const HEIGHT = 1350; // Taller layout like real ads
 
+function drawWrappedText(ctx: any, text: string, x: number, y: number, maxWidth: number, lineHeight: number, maxLines = 2) {
+  const words = text.split(" ");
+  let line = "";
+  let lines: string[] = [];
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + " ";
+    const metrics = ctx.measureText(testLine);
+    const testWidth = metrics.width;
+
+    if (testWidth > maxWidth && n > 0) {
+      lines.push(line.trim());
+      line = words[n] + " ";
+      if (lines.length === maxLines) break;
+    } else {
+      line = testLine;
+    }
+  }
+
+  if (lines.length < maxLines) {
+    lines.push(line.trim());
+  } else {
+    // Add ellipsis to last line
+    const last = lines[maxLines - 1];
+    lines[maxLines - 1] = last.substring(0, last.length - 3) + "...";
+  }
+
+  // Draw lines
+  lines.forEach((l, i) => {
+    ctx.fillText(l, x, y + i * lineHeight);
+  });
+}
+
 type FlyerResult = {
   buffer: Buffer;
   base64: string;
@@ -45,7 +78,20 @@ export async function generateFlyer(
   ctx.textAlign = "center";
 
   const title = deal.title ? deal.title.substring(0, 80) : "Hot Deal!";
-  ctx.fillText(title, WIDTH / 2, 120);
+  ctx.textAlign = "center";
+ctx.fillStyle = "#111827";
+ctx.font = "700 60px Inter";
+
+drawWrappedText(
+  ctx,
+  title,
+  WIDTH / 2,
+  120,
+  900,      // max width before wrapping
+  70,       // line height
+  2         // max number of lines
+);
+
 
   // ----------------------
   // Product Image
