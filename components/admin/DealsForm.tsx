@@ -29,6 +29,22 @@ export default function DealsForm() {
     "Spring Sale", "World Cup",
   ];
 
+const STORE_TAGS = [
+    "",
+    "Amazon", "Walmart", "Target",
+    "Home Depot", "Costco", "Best Buy",
+    "Sam’s Club", "Lowe’s", "Kohl’s", "Macy’s",
+    "Staples", "Office Depot", "JCPenney",
+  ];
+
+const CAT_TAGS = [
+    "",
+    "Electronics", "Clothing & Apparel", "Kids & Toys", "Home & Kitchen",
+    "Beauty & Personal Care", "Grocery & Food", "Appliances",
+    "Health & Wellness", "Pet Supplies",
+  ];
+
+
   const [productUrl, setProductUrl] = useState("");
   const [fetching, setFetching] = useState(false);
   const [fetchingAI, setFetchingAI] = useState(false);
@@ -220,20 +236,7 @@ const generateAI = async () => {
         </button>
       </div>
 
-      {/* --------------------------
-           AI SEO GENERATION
-      -------------------------- */}
-      <button
-        type="button"
-        onClick={generateAI}
-        disabled={fetchingAI}
-        className={`w-full p-2 rounded text-white ${
-          fetchingAI ? "bg-gray-400" : "bg-purple-600 hover:bg-purple-700"
-        }`}
-      >
-        {fetchingAI ? "Generating..." : "✨ AI: Generate EN + ES SEO"}
-      </button>
-
+     
       {/* --------------------------
            ENGLISH TITLE + DESCRIPTION
       -------------------------- */}
@@ -292,13 +295,26 @@ const generateAI = async () => {
           placeholder="Old Price"
           className="input"
         />
-        <input
-          name="storeName"
-          value={form.storeName}
-          onChange={onChange}
-          placeholder="Store Name"
-          className="input"
-        />
+       
+		 <select
+        name="storeName"
+        value={form.storeName}
+        onChange={onChange}
+        className="input"
+      >
+        {STORE_TAGS.map((tag) => (
+          <option key={tag} value={tag}>
+            {tag || "No Store"}
+          </option>
+        ))}
+      </select>
+		
+		
+		
+		
+		
+		
+		
       </div>
 
       {/* --------------------------
@@ -355,13 +371,24 @@ const generateAI = async () => {
         className="input"
       />
 
-      <input
+    
+	  
+	   <select
         name="category"
         value={form.category}
         onChange={onChange}
-        placeholder="Category"
         className="input"
-      />
+      >
+        {CAT_TAGS.map((tag) => (
+          <option key={tag} value={tag}>
+            {tag || "No Category"}
+          </option>
+        ))}
+      </select>
+	  
+	  
+	  
+	  
 
       {/* Holiday */}
       <select
@@ -376,6 +403,21 @@ const generateAI = async () => {
           </option>
         ))}
       </select>
+
+
+ {/* --------------------------
+           AI SEO GENERATION
+      -------------------------- */}
+      <button
+        type="button"
+        onClick={generateAI}
+        disabled={fetchingAI}
+        className={`w-full p-2 rounded text-white ${
+          fetchingAI ? "bg-gray-400" : "bg-purple-600 hover:bg-purple-700"
+        }`}
+      >
+        {fetchingAI ? "Generating..." : "✨ AI: Generate EN + ES SEO"}
+      </button>
 
       {/* --------------------------
            SAVE BUTTON

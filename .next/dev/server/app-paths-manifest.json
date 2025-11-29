@@ -1,7 +1,13 @@
 {
-  "/about/page": "app/about/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/api/ai-generate-seo/route": "app/api/ai-generate-seo/route.js",
+  "/api/auto-publish-settings/route": "app/api/auto-publish-settings/route.js",
+  "/api/deals/route": "app/api/deals/route.js",
+  "/api/fetch-title/route": "app/api/fetch-title/route.js",
   "/api/holiday-events/route": "app/api/holiday-events/route.js",
-  "/contact/page": "app/contact/page.js",
+  "/api/login/route": "app/api/login/route.js",
+  "/api/scrape/route": "app/api/scrape/route.js",
+  "/login/page": "app/login/page.js",
   "/page": "app/page.js",
   "/privacy/page": "app/privacy/page.js"
 }
