@@ -16,7 +16,8 @@ export async function POST() {
     }
 
     const caption = buildCaption(deal);
-    const flyer = await generateFlyer(deal, LOGO_URL);
+    const flyer = await generateFlyer(deal);
+
 
     // For now: only X. Later: publishToFacebook, publishToInstagram, etc.
     const tweet = await publishToX(caption.text, flyer.base64);
