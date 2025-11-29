@@ -9,9 +9,13 @@ const client = new TwitterApi({
 
 export async function publishToX(text: string, imageBase64: string) {
   // media upload uses v1.1
-  const mediaId = await client.v1.uploadMedia(Buffer.from(imageBase64, "base64"), {
-    type: "png",
-  });
+ const mediaId = await client.v1.uploadMedia(
+  Buffer.from(imageBase64, "base64"),
+  {
+    mimeType: "image/png"
+  }
+);
+
 
   const tweet = await client.v2.tweet({
     text,
