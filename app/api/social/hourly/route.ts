@@ -4,34 +4,27 @@ import { buildCaption } from "@/lib/social/captionBuilder";
 import { generateFlyer } from "@/lib/social/flyerGenerator";
 import { publishToX } from "@/lib/social/publishers/x";
 
-const LOGO_URL = "https://www.dealswindfall.com/dealswindfall-logoA.png"; // or Supabase storage URL
-
 export async function POST() {
   try {
     const deal = await pickDealFromLastHour();
 
     if (!deal) {
-      console.log("No deals found in last hour; skipping social post.");
-      return NextResponse.json({ skipped: true });
+      return NextResponse.json({ error: "No deal found" }, { status: 404 });
     }
 
     const caption = buildCaption(deal);
+
     const flyer = await generateFlyer(deal);
+    const flyerBase64 = flyer.toString("base64");
 
-
-    // For now: only X. Later: publishToFacebook, publishToInstagram, etc.
-    const tweet = await publishToX(caption.text, flyer.base64);
+    const tweet = await publishToX(caption.text, flyerBase64);
 
     return NextResponse.json({
       success: true,
-      dealId: deal.id,
-      tweetId: tweet.data.id,
+      data: tweet,
     });
-  } catch (error: any) {
-    console.error("Hourly social post error:", error);
-    return NextResponse.json(
-      { error: error.message ?? "Unknown error" },
-      { status: 500 }
-    );
-    }
+  } catch (err) {
+    console.error("Hourly social post error:", err);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
 }

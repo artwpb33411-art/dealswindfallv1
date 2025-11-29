@@ -1,4 +1,4 @@
-import type { SelectedDeal } from "./dealSelector";
+import type { SelectedDeal } from "./types";
 
 export type SocialContent = {
   text: string;

@@ -1,8 +1,8 @@
 import { createCanvas, loadImage, registerFont } from "canvas";
-import type { SelectedDeal } from "./dealSelector";
+import type { SelectedDeal } from "./types";
 import path from "path";
 
-// Load Inter Fonts (Regular + Bold)
+// Load Inter Fonts
 registerFont(path.join(process.cwd(), "public/fonts/Inter-Regular.ttf"), {
   family: "Inter",
   weight: "400",
@@ -12,7 +12,20 @@ registerFont(path.join(process.cwd(), "public/fonts/Inter-Bold.ttf"), {
   weight: "700",
 });
 
-// --- Helper: Text Wrapping ---
+// Format price like $12.99
+function formatPrice(value: number | null): string {
+  if (value == null) return "$0.00";
+  return `$${value.toFixed(2)}`;
+}
+
+function getEmoji(percent: number): string {
+  if (percent >= 60) return "🔥🔥";
+  if (percent >= 40) return "⚡";
+  if (percent >= 25) return "💥";
+  return "";
+}
+
+// Text wrapping
 function drawWrappedText(
   ctx: any,
   text: string,
@@ -24,7 +37,7 @@ function drawWrappedText(
 ): number {
   const words = text.split(" ");
   let line = "";
-  let lines: string[] = [];
+  const lines: string[] = [];
 
   for (let i = 0; i < words.length; i++) {
     const testLine = line + words[i] + " ";
@@ -33,7 +46,6 @@ function drawWrappedText(
     if (testWidth > maxWidth && i > 0) {
       lines.push(line.trim());
       line = words[i] + " ";
-
       if (lines.length === maxLines) break;
     } else {
       line = testLine;
@@ -43,18 +55,14 @@ function drawWrappedText(
   if (lines.length < maxLines) {
     lines.push(line.trim());
   } else {
-    // Add ellipsis to last line
-    lines[maxLines - 1] = lines[maxLines - 1] + "...";
+    lines[maxLines - 1] += "...";
   }
 
-  lines.forEach((l, idx) => {
-    ctx.fillText(l, x, y + idx * lineHeight);
-  });
+  lines.forEach((l, idx) => ctx.fillText(l, x, y + idx * lineHeight));
 
   return lines.length;
 }
 
-// --- MAIN FLYER GENERATOR ---
 export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   const WIDTH = 1080;
   const HEIGHT = 1350;
@@ -62,11 +70,10 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext("2d");
 
-  // Background
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // ---- Title Rendering ----
+  // Title
   ctx.textAlign = "center";
   ctx.fillStyle = "#111827";
   ctx.font = "700 60px Inter";
@@ -75,29 +82,26 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
     ctx,
     deal.title,
     WIDTH / 2,
-    100,   // Title top padding
-    900,   // Max width
-    70,    // Line height
-    2      // Max lines
+    100,
+    900,
+    70,
+    2
   );
 
-  // ---- Product Image ----
-  let imgY = 100 + titleLines * 70 + 60; // Dynamically push image down
-  const imgHeight = 600;
+  // Image
+  const imgY = 100 + titleLines * 70 + 60;
   const imgWidth = 900;
+  const imgHeight = 600;
+  const imgX = (WIDTH - imgWidth) / 2;
 
   try {
-    const image = await loadImage(deal.imageUrl);
-    const imgX = (WIDTH - imgWidth) / 2;
-
-    // White background frame
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(imgX - 10, imgY - 10, imgWidth + 20, imgHeight + 20);
-
-    // Draw main product image (contain mode)
+    const image = await loadImage(deal.image_url || "");
     const ratio = Math.min(imgWidth / image.width, imgHeight / image.height);
     const finalW = image.width * ratio;
     const finalH = image.height * ratio;
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(imgX - 10, imgY - 10, imgWidth + 20, imgHeight + 20);
 
     ctx.drawImage(
       image,
@@ -110,35 +114,36 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
     console.log("Image load error:", err);
   }
 
-  // ---- PRICE + DISCOUNT BOX ----
+  // Price Box
   const boxY = imgY + imgHeight + 60;
-  ctx.fillStyle = "#facc15"; // Yellow
+  ctx.fillStyle = "#facc15";
   ctx.roundRect(300, boxY, 480, 150, 50);
   ctx.fill();
 
-  // Price
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = "#000";
   ctx.font = "700 70px Inter";
-  ctx.textAlign = "center";
-  ctx.fillText(`$${deal.currentPrice}`, WIDTH / 2, boxY + 70);
+  ctx.fillText(formatPrice(deal.price), WIDTH / 2, boxY + 70);
 
-  // Discount %
+  const percent =
+    deal.percent_diff ??
+    (deal.old_price && deal.price
+      ? Math.round(((deal.old_price - deal.price) / deal.old_price) * 100)
+      : 0);
+
   ctx.font = "700 40px Inter";
   ctx.fillStyle = "#d00000";
-  ctx.fillText(`${deal.percentOff}% OFF`, WIDTH / 2, boxY + 130);
+  ctx.fillText(`${percent}% OFF ${getEmoji(percent)}`, WIDTH / 2, boxY + 130);
 
-  // ---- Logo + Website ----
+  // Logo
   const logoUrl = "https://www.dealswindfall.com/dealswindfall-logoA.png";
 
   try {
     const logo = await loadImage(logoUrl);
-    const logoHeight = 80;
-    const logoWidth = (logo.width / logo.height) * logoHeight;
-
-    ctx.drawImage(logo, 60, HEIGHT - 150, logoWidth, logoHeight);
+    const h = 80;
+    const w = (logo.width / logo.height) * h;
+    ctx.drawImage(logo, 60, HEIGHT - 150, w, h);
   } catch {}
 
-  ctx.fillStyle = "#111827";
   ctx.font = "400 40px Inter";
   ctx.textAlign = "right";
   ctx.fillText("www.dealswindfall.com", WIDTH - 60, HEIGHT - 80);
