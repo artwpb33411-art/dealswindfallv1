@@ -1,3 +1,9 @@
+import { NextResponse } from "next/server";
+import { pickDealFromLastHour } from "@/lib/social/dealSelector";
+import { buildCaption } from "@/lib/social/captionBuilder";
+import { generateFlyer } from "@/lib/social/flyerGenerator";
+import { publishToFacebook } from "@/lib/social/publishers/facebook";
+
 export async function POST() {
   try {
     const deal = await pickDealFromLastHour();
