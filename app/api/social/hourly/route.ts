@@ -4,6 +4,8 @@ import { buildCaption } from "@/lib/social/captionBuilder";
 import { generateFlyer } from "@/lib/social/flyerGenerator";
 import { publishToX } from "@/lib/social/publishers/x";
 import { publishToTelegram } from "@/lib/social/publishers/telegram";
+import { publishToFacebook } from "@/lib/social/publishers/facebook";
+
 
 export async function POST() {
   try {
