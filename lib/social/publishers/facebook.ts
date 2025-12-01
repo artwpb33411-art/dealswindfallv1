@@ -1,21 +1,25 @@
-export async function publishToFacebook(caption: string, base64Image: string) {
+export async function publishToFacebook(
+  caption: string,
+  base64Image: string
+) {
   try {
     const PAGE_ID = process.env.FACEBOOK_PAGE_ID!;
     const PAGE_TOKEN = process.env.FACEBOOK_PAGE_TOKEN!;
+
+    const buffer = Buffer.from(base64Image, "base64");
+
+    const file = new File([buffer], "image.png", { type: "image/png" });
+
+    const formData = new FormData();
+    formData.append("access_token", PAGE_TOKEN);
+    formData.append("caption", caption);
+    formData.append("source", file);
 
     const res = await fetch(
       `https://graph.facebook.com/v19.0/${PAGE_ID}/photos`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          caption,
-          access_token: PAGE_TOKEN,
-          // Base64 upload (FB accepts this format)
-          source: `data:image/png;base64,${base64Image}`,
-        }),
+        body: formData,
       }
     );
 
