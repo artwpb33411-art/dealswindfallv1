@@ -6,7 +6,6 @@ import { publishToX } from "@/lib/social/publishers/x";
 import { publishToTelegram } from "@/lib/social/publishers/telegram";
 import { publishToFacebook } from "@/lib/social/publishers/facebook";
 
-
 export async function POST() {
   try {
     const deal = await pickDealFromLastHour();
@@ -20,16 +19,22 @@ export async function POST() {
     const flyer = await generateFlyer(deal);
     const flyerBase64 = flyer.toString("base64");
 
-    const tweet = await publishToX(caption.text, flyerBase64); // for X
-	
-	
-	
-	const telegram = await publishToTelegram(caption.text, flyerBase64); // for telegram
+    // ❗ POST TO X
+    const tweet = await publishToX(caption.text, flyerBase64);
 
+    // ❗ POST TO TELEGRAM
+    const telegram = await publishToTelegram(caption.text, flyerBase64);
+
+    // ❗ POST TO FACEBOOK
+    const facebook = await publishToFacebook(caption.text, flyerBase64);
 
     return NextResponse.json({
       success: true,
-      data: tweet,
+      data: {
+        x: tweet,
+        telegram,
+        facebook,
+      },
     });
   } catch (err) {
     console.error("Hourly social post error:", err);
