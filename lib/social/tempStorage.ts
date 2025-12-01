@@ -11,7 +11,7 @@ export async function uploadTempImage(buffer: Buffer, name: string) {
     });
 
   if (error) {
-    console.error("Image upload error:", error);
+    console.error("Supabase upload error:", error);
     return null;
   }
 
@@ -19,9 +19,18 @@ export async function uploadTempImage(buffer: Buffer, name: string) {
     data: { publicUrl },
   } = supabaseAdmin.storage.from("social-temp").getPublicUrl(filePath);
 
-  return { filePath, publicUrl };
+  return {
+    filePath,
+    publicUrl,
+  };
 }
 
-export async function deleteTempImage(path: string) {
-  await supabaseAdmin.storage.from("social-temp").remove([path]);
+export async function deleteTempImage(filePath: string) {
+  const { error } = await supabaseAdmin.storage
+    .from("social-temp")
+    .remove([filePath]);
+
+  if (error) {
+    console.error("Supabase delete error:", error);
+  }
 }

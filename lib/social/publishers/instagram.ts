@@ -3,7 +3,7 @@ export async function publishToInstagram(caption: string, imageUrl: string) {
     const IG_ID = process.env.INSTAGRAM_BUSINESS_ID!;
     const TOKEN = process.env.INSTAGRAM_LONG_LIVED_TOKEN!;
 
-    // Step 1 — Create media object
+    // 1️⃣ Create media object (upload reference)
     const mediaRes = await fetch(
       `https://graph.facebook.com/v19.0/${IG_ID}/media`,
       {
@@ -18,14 +18,15 @@ export async function publishToInstagram(caption: string, imageUrl: string) {
     );
 
     const mediaJson = await mediaRes.json();
-    if (!mediaJson.id) {
+
+    if (!mediaRes.ok || !mediaJson.id) {
       console.error("IG MEDIA ERROR:", mediaJson);
-      return mediaJson;
+      return { step: "media", error: mediaJson };
     }
 
     const creationId = mediaJson.id;
 
-    // Step 2 — Publish media
+    // 2️⃣ Publish media object to feed
     const publishRes = await fetch(
       `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
       {
@@ -39,7 +40,13 @@ export async function publishToInstagram(caption: string, imageUrl: string) {
     );
 
     const publishJson = await publishRes.json();
-    return publishJson;
+
+    if (!publishRes.ok) {
+      console.error("IG PUBLISH ERROR:", publishJson);
+      return { step: "publish", error: publishJson };
+    }
+
+    return publishJson; // { id: 'INSTAGRAM_POST_ID' }
   } catch (err) {
     console.error("INSTAGRAM ERROR:", err);
     return null;
