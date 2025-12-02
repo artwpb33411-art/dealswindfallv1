@@ -6,6 +6,6 @@ export type SelectedDeal = {
   old_price: number | null;
   percent_diff: number | null;
   store_name: string | null;
-  image_url: string | null;
+  image_link: string | null;   // <-- FIXED HERE
   slug: string;
 };

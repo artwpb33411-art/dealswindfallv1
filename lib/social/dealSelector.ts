@@ -39,7 +39,7 @@ export async function pickDealFromLastHour(): Promise<SelectedDeal | null> {
     old_price: deal.old_price,
     percent_diff: deal.percent_diff,
     store_name: deal.store_name,
-    image_url: deal.image_link,
+    image_link: deal.image_link,
     slug: deal.slug,
   };
 }

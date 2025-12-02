@@ -1,5 +1,4 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import path from "path";
 import crypto from "crypto";
 
 export async function saveImageToSupabase(imageUrl: string) {
@@ -14,13 +13,12 @@ export async function saveImageToSupabase(imageUrl: string) {
     const buffer = Buffer.from(await res.arrayBuffer());
 
     const filename = `${crypto.randomUUID()}.jpg`;
-    const filePath = `products/${filename}`;
+    const path = `products/${filename}`;
 
-    const { data, error } = await supabaseAdmin.storage
+    const { error } = await supabaseAdmin.storage
       .from("social-temp")
-      .upload(filePath, buffer, {
+      .upload(path, buffer, {
         contentType: "image/jpeg",
-        upsert: false,
       });
 
     if (error) {
@@ -28,14 +26,12 @@ export async function saveImageToSupabase(imageUrl: string) {
       return null;
     }
 
-    // Get public URL
-    const publicUrl = supabaseAdmin.storage
+    return supabaseAdmin.storage
       .from("social-temp")
-      .getPublicUrl(filePath).data.publicUrl;
+      .getPublicUrl(path).data.publicUrl;
 
-    return publicUrl;
   } catch (err) {
-    console.log("saveImageToSupabase error:", err);
+    console.log("saveImage error:", err);
     return null;
   }
 }

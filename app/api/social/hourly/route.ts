@@ -10,87 +10,81 @@ import { publishToTelegram } from "@/lib/social/publishers/telegram";
 import { publishToFacebook } from "@/lib/social/publishers/facebook";
 import { publishToInstagram } from "@/lib/social/publishers/instagram";
 
-
 export async function POST() {
   try {
     console.log("### HOURLY POST STARTED ###");
 
-    // 1. Pick a deal that was published in the last hour
+    // 1. Pick deal
     const deal = await pickDealFromLastHour();
     if (!deal) {
-      console.log("No deal found in last hour");
+      console.log("No deal found in last hour.");
       return NextResponse.json({ error: "No deal found" }, { status: 404 });
     }
 
-    // 2. Caption text for social platforms
+    // 2. Caption
     const caption = buildCaption(deal);
 
-    // 3. Download deal image → upload to Supabase → get safe URL
-    // 3. Download deal image → upload to Supabase → get safe URL
-console.log("Downloading & saving image:", deal.image_url);
+    // 3. Store image to Supabase
+    console.log("Downloading & storing:", deal.image_link);
 
-let storedUrl: string | null = null;
+    let storedUrl: string | null = null;
 
-if (deal.image_url) {
-  storedUrl = await saveImageToSupabase(deal.image_url);
-} else {
-  console.warn("⚠ No image_url provided for deal — using placeholder");
-}
+    if (deal.image_link) {
+      storedUrl = await saveImageToSupabase(deal.image_link);
+    } else {
+      console.warn("⚠ No image_link for this deal.");
+    }
 
-if (storedUrl) {
-  console.log("Image stored:", storedUrl);
-  deal.image_url = storedUrl;
-}
+    if (storedUrl) {
+      console.log("Stored Supabase URL:", storedUrl);
+      deal.image_link = storedUrl; // override with supabase safe URL
+    }
 
-
-    // 4. Generate flyer (PNG buffer → Base64)
+    // 4. Generate flyer using updated image link
     console.log("Generating flyer...");
     const flyer = await generateFlyer(deal);
     const flyerBase64 = flyer.toString("base64");
 
-    // --- SOCIAL MEDIA PUBLISHING ---
+    // Publish results
     let xResult = null;
     let telegramResult = null;
     let facebookResult = null;
     let instagramResult = null;
 
- /*   // 5. Post to X (Twitter)
+    // 5. X
+    // 5. X
+try {
+  xResult = await publishToX(caption.text, flyerBase64);
+  console.log("Posted to X:", xResult?.data?.id);
+} catch (err) {
+  console.error("X ERROR:", err);
+}
+
+    // 6. Telegram
     try {
-      console.log("Posting to X...");
-      xResult = await publishToX(caption.text, flyerBase64);
-      console.log("X posted:", xResult.id);
-    } catch (err) {
-      console.error("X POST ERROR:", err);
-    }
-*/
-    // 6. Post to Telegram
-    try {
-      console.log("Posting to Telegram...");
       telegramResult = await publishToTelegram(caption.text, flyerBase64);
-      console.log("Telegram posted");
+      console.log("Posted to Telegram.");
     } catch (err) {
-      console.error("TELEGRAM POST ERROR:", err);
-    }
-/*
-    // 7. Post to Facebook Page
-   try {
-      console.log("Posting to Facebook...");
-      facebookResult = await publishToFacebook(caption.text, flyerBase64);
-      console.log("Facebook posted:", facebookResult);
-    } catch (err) {
-      console.error("FACEBOOK POST ERROR:", err);
+      console.error("TELEGRAM ERROR:", err);
     }
 
-    // 8. Post to Instagram Business Account
+    // 7. Facebook
     try {
-      console.log("Posting to Instagram...");
-      instagramResult = await publishToInstagram(caption.text, flyerBase64);
-      console.log("Instagram posted:", instagramResult);
+      facebookResult = await publishToFacebook(caption.text, flyerBase64);
+      console.log("Posted to Facebook.");
     } catch (err) {
-      console.error("INSTAGRAM POST ERROR:", err);
+      console.error("FACEBOOK ERROR:", err);
     }
-*/
-    console.log("### HOURLY POST COMPLETE ###");
+
+    // 8. Instagram
+    try {
+      instagramResult = await publishToInstagram(caption.text, flyerBase64);
+      console.log("Posted to Instagram.");
+    } catch (err) {
+      console.error("INSTAGRAM ERROR:", err);
+    }
+
+    console.log("### POST COMPLETE ###");
 
     return NextResponse.json({
       success: true,
@@ -99,10 +93,9 @@ if (storedUrl) {
         telegramResult,
         facebookResult,
         instagramResult,
-        usedImage: deal.image_url
-      }
+        usedImage: deal.image_link
+      },
     });
-
   } catch (err) {
     console.error("Hourly social post error:", err);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
