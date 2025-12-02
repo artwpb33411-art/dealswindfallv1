@@ -2,7 +2,7 @@ import { createCanvas, loadImage, registerFont } from "canvas";
 import type { SelectedDeal } from "./types";
 import path from "path";
 
-// Load fonts
+// Fonts
 registerFont(path.join(process.cwd(), "public/fonts/Inter-Regular.ttf"), {
   family: "Inter",
 });
@@ -48,18 +48,14 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext("2d");
 
-  // ------------------------------------------------------------------
-  // PREMIUM GRADIENT BACKGROUND
-  // ------------------------------------------------------------------
+  // Background gradient
   const gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
   gradient.addColorStop(0, "#f7f9fc");
   gradient.addColorStop(1, "#eaf0f6");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // ------------------------------------------------------------------
-  // TITLE (get best size)
-  // ------------------------------------------------------------------
+  // TITLE
   ctx.fillStyle = "#111827";
   let fontSize = 58;
   let lines: string[] = [];
@@ -85,9 +81,7 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
     y += lineHeight;
   }
 
-  // ------------------------------------------------------------------
-  // PRODUCT IMAGE ZONE – PREMIUM GLASS CARD
-  // ------------------------------------------------------------------
+  // IMAGE CARD
   const imgTop = y + 40;
   const boxW = 900;
   const boxH = 600;
@@ -98,70 +92,53 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   ctx.roundRect(boxX + 6, imgTop + 6, boxW, boxH, 40);
   ctx.fill();
 
-  // Glass frame
-  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  // Card background
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.roundRect(boxX, imgTop, boxW, boxH, 40);
   ctx.fill();
 
-  // Premium shadow behind image (compatible with node-canvas)
-ctx.save();
-ctx.shadowColor = "rgba(0,0,0,0.15)";
-ctx.shadowBlur = 60;
-ctx.shadowOffsetX = 0;
-ctx.shadowOffsetY = 20;
+  // Soft glow behind image (node-canvas safe)
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.18)";
+  ctx.shadowBlur = 55;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 20;
+  ctx.fillStyle = "rgba(255,255,255,0.001)";
+  ctx.roundRect(boxX + 40, imgTop + 40, boxW - 80, boxH - 80, 32);
+  ctx.fill();
+  ctx.restore();
 
-ctx.fillStyle = "rgba(255,255,255,0.0001)";
-ctx.roundRect(boxX + 40, imgTop + 40, boxW - 80, boxH - 80, 32);
-ctx.fill();
-ctx.restore();
-
-
-  // ------------------------------------------------------------------
-  // LOAD PRODUCT IMAGE (with fallback!)
-  // ------------------------------------------------------------------
-  let safeImageUrl =
+  // LOAD PRODUCT IMAGE
+  const safeImageUrl =
     deal.image_link ||
     "https://www.dealswindfall.com/dealswindfall-logoA.png";
 
-  let loadedImage = null;
-
   try {
-    console.log("Loading image:", safeImageUrl);
-    loadedImage = await loadImage(safeImageUrl);
+    console.log("🖼 Flyer loading image:", safeImageUrl);
+    const image = await loadImage(safeImageUrl);
+
+    const ratio = Math.min(boxW / image.width, boxH / image.height);
+    const w = image.width * ratio;
+    const h = image.height * ratio;
+    const imgX = boxX + (boxW - w) / 2;
+    const imgY = imgTop + (boxH - h) / 2;
+
+    ctx.drawImage(image, imgX, imgY, w, h);
   } catch (err) {
-    console.error("Product image fail → using fallback logo.", err);
-    safeImageUrl = "https://www.dealswindfall.com/dealswindfall-logoA.png";
-    loadedImage = await loadImage(safeImageUrl);
+    console.error("❌ Flyer image load FAILED:", err);
   }
 
-  const ratio = Math.min(boxW / loadedImage.width, boxH / loadedImage.height);
-  const w = loadedImage.width * ratio;
-  const h = loadedImage.height * ratio;
-  const imgX = boxX + (boxW - w) / 2;
-  const imgY = imgTop + (boxH - h) / 2;
-
-  ctx.drawImage(loadedImage, imgX, imgY, w, h);
-
-  // ------------------------------------------------------------------
-  // PREMIUM PRICE BADGE – Glass pill style
-  // ------------------------------------------------------------------
+  // PRICE BADGE
   const priceBoxY = imgTop + boxH + 80;
   const badgeW = 650;
   const badgeH = 200;
   const badgeX = (WIDTH - badgeW) / 2;
 
-  // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.09)";
-  ctx.roundRect(badgeX + 6, priceBoxY + 8, badgeW, badgeH, 42);
-  ctx.fill();
-
-  // Glass badge
-  ctx.fillStyle = "rgba(34,197,94,0.9)"; // green premium
+  ctx.fillStyle = "#22c55e";
   ctx.roundRect(badgeX, priceBoxY, badgeW, badgeH, 42);
   ctx.fill();
 
   const price = formatPrice(deal.price);
-
   const percent =
     deal.percent_diff ??
     (deal.old_price && deal.price
@@ -177,11 +154,11 @@ ctx.restore();
   ctx.font = "700 42px Inter";
   ctx.fillText(`${percent}% OFF ${getEmoji(percent)}`, WIDTH / 2, priceBoxY + 155);
 
-  // ------------------------------------------------------------------
   // FOOTER LOGO
-  // ------------------------------------------------------------------
   try {
-    const logo = await loadImage("https://www.dealswindfall.com/dealswindfall-logoA.png");
+    const logo = await loadImage(
+      "https://www.dealswindfall.com/dealswindfall-logoA.png"
+    );
     const logoH = 90;
     const logoW = (logo.width / logo.height) * logoH;
 
@@ -190,7 +167,6 @@ ctx.restore();
     console.error("Footer logo failed:", err);
   }
 
-  // URL
   ctx.font = "400 36px Inter";
   ctx.fillStyle = "#6b7280";
   ctx.fillText("www.dealswindfall.com", WIDTH / 2, HEIGHT - 110);

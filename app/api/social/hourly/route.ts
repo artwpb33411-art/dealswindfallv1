@@ -15,33 +15,31 @@ import { publishToInstagram } from "@/lib/social/publishers/instagram";
 
 export async function POST() {
   try {
-    console.log("###################################");
-    console.log("### HOURLY AUTOPOST STARTED #######");
-    console.log("###################################");
+    console.log("##############################");
+    console.log("### HOURLY AUTPOST STARTED ###");
+    console.log("##############################");
 
     // 1️⃣ PICK DEAL
     const deal = await pickDealFromLastHour();
     if (!deal) {
-      console.log("❌ No deal found in the last hour.");
+      console.log("❌ No deal found in last hour.");
       return NextResponse.json({ error: "No deal found" }, { status: 404 });
     }
 
     console.log("🛒 Deal Selected:", deal.title);
 
-    // 2️⃣ BUILD CAPTION
     const caption = buildCaption(deal);
 
-    // 3️⃣ STORE ORIGINAL PRODUCT IMAGE (makes it public)
+    // 2️⃣ STORE PRODUCT IMAGE TO SUPABASE (PUBLIC URL)
     let finalImage: string | null = null;
 
     if (deal.image_link) {
       try {
         console.log("⬇ Downloading product image:", deal.image_link);
-
         finalImage = await saveImageToSupabase(deal.image_link);
 
         if (!finalImage) {
-          console.warn("⚠ Could not store product image in Supabase. Using original URL.");
+          console.warn("⚠ Could not store product image, using original URL.");
           finalImage = deal.image_link;
         } else {
           console.log("🟢 Product image stored:", finalImage);
@@ -51,23 +49,21 @@ export async function POST() {
         finalImage = deal.image_link;
       }
     } else {
-      console.warn("⚠ Deal has no image_link.");
+      console.warn("⚠ Deal has no image_link, using logo fallback.");
       finalImage = "https://www.dealswindfall.com/dealswindfall-logoA.png";
     }
 
-    // 4️⃣ GENERATE ALL FLYER FORMATS
-    console.log("🖨 Generating flyers (portrait, square, story)...");
+    // 3️⃣ GENERATE FLYERS (CANVAS)
+    console.log("🖨 Generating flyers...");
 
     const flyerPortrait = await generateFlyer({
       ...deal,
       image_link: finalImage,
     });
-
     const flyerSquare = await generateFlyerSquare({
       ...deal,
       image_link: finalImage,
     });
-
     const flyerStory = await generateFlyerStory({
       ...deal,
       image_link: finalImage,
@@ -77,25 +73,19 @@ export async function POST() {
     const squareBase64 = flyerSquare.toString("base64");
     const storyBase64 = flyerStory.toString("base64");
 
-    // 5️⃣ PUBLISH TO ALL NETWORKS
+    // 4️⃣ POST TO SOCIAL NETWORKS (same as before)
     let xResult = null;
     let telegramResult = null;
     let facebookResult = null;
     let instagramResult = null;
 
-    // -------------------------------------------------------
-    // 🐦 X / Twitter → USE SQUARE
-    // -------------------------------------------------------
     try {
       xResult = await publishToX(caption.text, squareBase64);
-      console.log("🐦 Posted to X:", xResult?.data?.id);
+      console.log("🐦 Posted to X");
     } catch (err) {
       console.error("❌ X POST ERROR:", err);
     }
 
-    // -------------------------------------------------------
-    // 📩 Telegram → USE SQUARE
-    // -------------------------------------------------------
     try {
       telegramResult = await publishToTelegram(caption.text, squareBase64);
       console.log("📩 Posted to Telegram");
@@ -103,9 +93,6 @@ export async function POST() {
       console.error("❌ TELEGRAM POST ERROR:", err);
     }
 
-    // -------------------------------------------------------
-    // 📘 Facebook → USE PORTRAIT
-    // -------------------------------------------------------
     try {
       facebookResult = await publishToFacebook(caption.text, portraitBase64);
       console.log("📘 Posted to Facebook");
@@ -113,35 +100,25 @@ export async function POST() {
       console.error("❌ FACEBOOK POST ERROR:", err);
     }
 
-    // -------------------------------------------------------
-    // 📸 Instagram → FEED (portrait) + STORY (story)
-    // -------------------------------------------------------
     try {
-      instagramResult = await publishToInstagram({
-        caption: caption.text,
-        feedImage: portraitBase64,
-        storyImage: storyBase64,
-      });
-
-      console.log("📸 Posted to Instagram (Feed + Story)");
+      instagramResult = await publishToInstagram(caption.text, portraitBase64);
+      console.log("📸 Posted to Instagram");
     } catch (err) {
       console.error("❌ INSTAGRAM POST ERROR:", err);
     }
 
-    console.log("### SOCIAL POST COMPLETE ###");
+    console.log("### AUTOPOST COMPLETE ###");
 
     return NextResponse.json({
       success: true,
-      data: {
-        usedImage: finalImage,
-        xResult,
-        telegramResult,
-        facebookResult,
-        instagramResult,
-      },
+      usedImage: finalImage,
+      xResult,
+      telegramResult,
+      facebookResult,
+      instagramResult,
     });
   } catch (err) {
-    console.error("❌ HOURLY POST ERROR:", err);
+    console.error("❌ HOURLY ROUTE ERROR:", err);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
