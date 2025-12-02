@@ -2,7 +2,7 @@ import { createCanvas, loadImage, registerFont } from "canvas";
 import type { SelectedDeal } from "./types";
 import path from "path";
 
-// Fonts
+// Load fonts
 registerFont(path.join(process.cwd(), "public/fonts/Inter-Regular.ttf"), {
   family: "Inter",
 });
@@ -14,13 +14,11 @@ registerFont(path.join(process.cwd(), "public/fonts/Inter-Bold.ttf"), {
 const WIDTH = 1080;
 const HEIGHT = 1350;
 
-// Format price
 function formatPrice(val: number | null) {
   if (val == null) return "$0.00";
   return `$${val.toFixed(2)}`;
 }
 
-// Emoji helper
 function getEmoji(percent: number) {
   if (percent >= 60) return "🔥🔥";
   if (percent >= 40) return "⚡";
@@ -28,7 +26,6 @@ function getEmoji(percent: number) {
   return "";
 }
 
-// Title wrap
 function wrapLines(ctx: any, text: string, maxWidth: number) {
   const words = text.split(" ");
   const lines: string[] = [];
@@ -43,7 +40,6 @@ function wrapLines(ctx: any, text: string, maxWidth: number) {
       line = test;
     }
   }
-
   lines.push(line.trim());
   return lines;
 }
@@ -52,25 +48,32 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext("2d");
 
-  // Background
-  ctx.fillStyle = "#ffffff";
+  // ------------------------------------------------------------------
+  // PREMIUM GRADIENT BACKGROUND
+  // ------------------------------------------------------------------
+  const gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+  gradient.addColorStop(0, "#f7f9fc");
+  gradient.addColorStop(1, "#eaf0f6");
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // TITLE
+  // ------------------------------------------------------------------
+  // TITLE (get best size)
+  // ------------------------------------------------------------------
   ctx.fillStyle = "#111827";
-  let fontSize = 60;
+  let fontSize = 58;
   let lines: string[] = [];
 
-  while (fontSize >= 40) {
+  while (fontSize >= 36) {
     ctx.font = `700 ${fontSize}px Inter`;
     lines = wrapLines(ctx, deal.title, 900);
     if (lines.length <= 3) break;
-    fontSize -= 4;
+    fontSize -= 2;
   }
 
   if (lines.length > 3) {
     lines = lines.slice(0, 3);
-    lines[2] = lines[2] + "...";
+    lines[2] += "...";
   }
 
   ctx.textAlign = "center";
@@ -82,50 +85,79 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
     y += lineHeight;
   }
 
-  // IMAGE BOX
+  // ------------------------------------------------------------------
+  // PRODUCT IMAGE ZONE – PREMIUM GLASS CARD
+  // ------------------------------------------------------------------
   const imgTop = y + 40;
   const boxW = 900;
   const boxH = 600;
   const boxX = (WIDTH - boxW) / 2;
 
-  ctx.fillStyle = "#f3f4f6";
-  ctx.roundRect(boxX, imgTop, boxW, boxH, 32);
+  // Card shadow
+  ctx.fillStyle = "rgba(0,0,0,0.08)";
+  ctx.roundRect(boxX + 6, imgTop + 6, boxW, boxH, 40);
   ctx.fill();
 
-  // LOAD PRODUCT IMAGE
-try {
-  if (!deal.image_link) {
-    console.error("No product image — using fallback logo.");
+  // Glass frame
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.roundRect(boxX, imgTop, boxW, boxH, 40);
+  ctx.fill();
+
+  // Premium shadow behind image (compatible with node-canvas)
+ctx.save();
+ctx.shadowColor = "rgba(0,0,0,0.15)";
+ctx.shadowBlur = 60;
+ctx.shadowOffsetX = 0;
+ctx.shadowOffsetY = 20;
+
+ctx.fillStyle = "rgba(255,255,255,0.0001)";
+ctx.roundRect(boxX + 40, imgTop + 40, boxW - 80, boxH - 80, 32);
+ctx.fill();
+ctx.restore();
+
+
+  // ------------------------------------------------------------------
+  // LOAD PRODUCT IMAGE (with fallback!)
+  // ------------------------------------------------------------------
+  let safeImageUrl =
+    deal.image_link ||
+    "https://www.dealswindfall.com/dealswindfall-logoA.png";
+
+  let loadedImage = null;
+
+  try {
+    console.log("Loading image:", safeImageUrl);
+    loadedImage = await loadImage(safeImageUrl);
+  } catch (err) {
+    console.error("Product image fail → using fallback logo.", err);
+    safeImageUrl = "https://www.dealswindfall.com/dealswindfall-logoA.png";
+    loadedImage = await loadImage(safeImageUrl);
   }
 
-  const safeImageUrl =
-    deal.image_link || "https://www.dealswindfall.com/dealswindfall-logoA.png";
-
-  console.log("Loading image:", safeImageUrl);
-
-  const image = await loadImage(safeImageUrl);
-
-  const ratio = Math.min(boxW / image.width, boxH / image.height);
-  const w = image.width * ratio;
-  const h = image.height * ratio;
-
+  const ratio = Math.min(boxW / loadedImage.width, boxH / loadedImage.height);
+  const w = loadedImage.width * ratio;
+  const h = loadedImage.height * ratio;
   const imgX = boxX + (boxW - w) / 2;
   const imgY = imgTop + (boxH - h) / 2;
 
-  ctx.drawImage(image, imgX, imgY, w, h);
-} catch (err) {
-  console.error("Flyer image load failed:", err);
-}
+  ctx.drawImage(loadedImage, imgX, imgY, w, h);
 
-
-  // PRICE BADGE (bigger)
-  const priceBoxY = imgTop + boxH + 60;
-  const badgeW = 520;     // wider
-  const badgeH = 200;     // taller
+  // ------------------------------------------------------------------
+  // PREMIUM PRICE BADGE – Glass pill style
+  // ------------------------------------------------------------------
+  const priceBoxY = imgTop + boxH + 80;
+  const badgeW = 650;
+  const badgeH = 200;
   const badgeX = (WIDTH - badgeW) / 2;
 
-  ctx.fillStyle = "#2ecc71";
-  ctx.roundRect(badgeX, priceBoxY, badgeW, badgeH, 40);
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.09)";
+  ctx.roundRect(badgeX + 6, priceBoxY + 8, badgeW, badgeH, 42);
+  ctx.fill();
+
+  // Glass badge
+  ctx.fillStyle = "rgba(34,197,94,0.9)"; // green premium
+  ctx.roundRect(badgeX, priceBoxY, badgeW, badgeH, 42);
   ctx.fill();
 
   const price = formatPrice(deal.price);
@@ -139,16 +171,15 @@ try {
   ctx.fillStyle = "#ffffff";
   ctx.textAlign = "center";
 
-  // Price text
-  ctx.font = "700 72px Inter";
+  ctx.font = "700 80px Inter";
   ctx.fillText(price, WIDTH / 2, priceBoxY + 95);
 
-  // Percent OFF text
-  ctx.font = "700 44px Inter";
-  const percentLabel = `${percent}% OFF ${getEmoji(percent)}`;
-  ctx.fillText(percentLabel, WIDTH / 2, priceBoxY + 155);
+  ctx.font = "700 42px Inter";
+  ctx.fillText(`${percent}% OFF ${getEmoji(percent)}`, WIDTH / 2, priceBoxY + 155);
 
+  // ------------------------------------------------------------------
   // FOOTER LOGO
+  // ------------------------------------------------------------------
   try {
     const logo = await loadImage("https://www.dealswindfall.com/dealswindfall-logoA.png");
     const logoH = 90;
@@ -156,13 +187,13 @@ try {
 
     ctx.drawImage(logo, (WIDTH - logoW) / 2, HEIGHT - 210, logoW, logoH);
   } catch (err) {
-    console.error("Logo load failed:", err);
+    console.error("Footer logo failed:", err);
   }
 
-  // FOOTER URL
-  ctx.font = "400 38px Inter";
+  // URL
+  ctx.font = "400 36px Inter";
   ctx.fillStyle = "#6b7280";
-  ctx.fillText("www.dealswindfall.com", WIDTH / 2, HEIGHT - 100);
+  ctx.fillText("www.dealswindfall.com", WIDTH / 2, HEIGHT - 110);
 
   return canvas.toBuffer("image/png");
 }
