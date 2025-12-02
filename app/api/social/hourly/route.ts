@@ -1,102 +1,108 @@
 import { NextResponse } from "next/server";
+
 import { pickDealFromLastHour } from "@/lib/social/dealSelector";
 import { buildCaption } from "@/lib/social/captionBuilder";
+import { saveImageToSupabase } from "@/lib/social/saveImage";
 import { generateFlyer } from "@/lib/social/flyerGenerator";
 
 import { publishToX } from "@/lib/social/publishers/x";
 import { publishToTelegram } from "@/lib/social/publishers/telegram";
 import { publishToFacebook } from "@/lib/social/publishers/facebook";
 import { publishToInstagram } from "@/lib/social/publishers/instagram";
-import { uploadTempImage, deleteTempImage } from "@/lib/social/tempStorage";
+
 
 export async function POST() {
   try {
+    console.log("### HOURLY POST STARTED ###");
+
+    // 1. Pick a deal that was published in the last hour
     const deal = await pickDealFromLastHour();
     if (!deal) {
+      console.log("No deal found in last hour");
       return NextResponse.json({ error: "No deal found" }, { status: 404 });
     }
 
+    // 2. Caption text for social platforms
     const caption = buildCaption(deal);
+
+    // 3. Download deal image → upload to Supabase → get safe URL
+    // 3. Download deal image → upload to Supabase → get safe URL
+console.log("Downloading & saving image:", deal.image_url);
+
+let storedUrl: string | null = null;
+
+if (deal.image_url) {
+  storedUrl = await saveImageToSupabase(deal.image_url);
+} else {
+  console.warn("⚠ No image_url provided for deal — using placeholder");
+}
+
+if (storedUrl) {
+  console.log("Image stored:", storedUrl);
+  deal.image_url = storedUrl;
+}
+
+
+    // 4. Generate flyer (PNG buffer → Base64)
+    console.log("Generating flyer...");
     const flyer = await generateFlyer(deal);
     const flyerBase64 = flyer.toString("base64");
 
-    let facebook: any = null;
-    let xResult: any = null;
-    let telegram: any = null;
-    let instagram: any = null;
+    // --- SOCIAL MEDIA PUBLISHING ---
+    let xResult = null;
+    let telegramResult = null;
+    let facebookResult = null;
+    let instagramResult = null;
 
-    console.log("### SOCIAL POST START — deal:", deal.id);
-
-    // 1️⃣ Upload flyer temporarily for Instagram
-    const upload = await uploadTempImage(
-      flyer,
-      `flyer_${deal.id}_${Date.now()}`
-    );
-
-    if (!upload) {
-      console.error("Temp upload failed – Instagram will be skipped.");
-    }
-
-    // --- Facebook (image via base64 → /photos) ---
-    try {
-      console.log("Posting to Facebook...");
-      facebook = await publishToFacebook(caption.text, flyerBase64);
-      console.log("FB RESULT:", facebook);
-    } catch (err) {
-      console.error("FACEBOOK ERROR:", err);
-    }
-
-    // --- X (Twitter) ---
+ /*   // 5. Post to X (Twitter)
     try {
       console.log("Posting to X...");
       xResult = await publishToX(caption.text, flyerBase64);
-      console.log("X RESULT:", xResult);
+      console.log("X posted:", xResult.id);
     } catch (err) {
-      console.error("X ERROR:", err);
+      console.error("X POST ERROR:", err);
     }
-
-    // --- Telegram ---
+*/
+    // 6. Post to Telegram
     try {
       console.log("Posting to Telegram...");
-      telegram = await publishToTelegram(caption.text, flyerBase64);
-      console.log("TELEGRAM RESULT:", telegram);
+      telegramResult = await publishToTelegram(caption.text, flyerBase64);
+      console.log("Telegram posted");
     } catch (err) {
-      console.error("TELEGRAM ERROR:", err);
+      console.error("TELEGRAM POST ERROR:", err);
+    }
+/*
+    // 7. Post to Facebook Page
+   try {
+      console.log("Posting to Facebook...");
+      facebookResult = await publishToFacebook(caption.text, flyerBase64);
+      console.log("Facebook posted:", facebookResult);
+    } catch (err) {
+      console.error("FACEBOOK POST ERROR:", err);
     }
 
-    // --- Instagram (requires public URL) ---
-    if (upload?.publicUrl) {
-      try {
-        console.log("Posting to Instagram with URL:", upload.publicUrl);
-        instagram = await publishToInstagram(
-          caption.text,
-          upload.publicUrl
-        );
-        console.log("INSTAGRAM RESULT:", instagram);
-      } catch (err) {
-        console.error("INSTAGRAM ERROR:", err);
-      }
-
-      // Delete temp image after posting attempt
-      try {
-        await deleteTempImage(upload.filePath);
-        console.log("Deleted temp image:", upload.filePath);
-      } catch (err) {
-        console.error("Temp image delete error:", err);
-      }
-    } else {
-      console.log("Skipping Instagram – no temp image URL.");
+    // 8. Post to Instagram Business Account
+    try {
+      console.log("Posting to Instagram...");
+      instagramResult = await publishToInstagram(caption.text, flyerBase64);
+      console.log("Instagram posted:", instagramResult);
+    } catch (err) {
+      console.error("INSTAGRAM POST ERROR:", err);
     }
+*/
+    console.log("### HOURLY POST COMPLETE ###");
 
     return NextResponse.json({
       success: true,
-      platforms: {
-        facebook,
-        x: xResult,
-        telegram,
-        instagram,
-      },
+      data: {
+        xResult,
+        telegramResult,
+        facebookResult,
+        instagramResult,
+        usedImage: deal.image_url
+      }
     });
+
   } catch (err) {
     console.error("Hourly social post error:", err);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
