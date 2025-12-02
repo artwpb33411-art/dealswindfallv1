@@ -1,37 +1,45 @@
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import crypto from "crypto";
+import { createClient } from "@supabase/supabase-js";
 
-export async function saveImageToSupabase(imageUrl: string) {
+// Initialize Supabase admin client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,   // Important: must be SERVICE ROLE
+  { auth: { persistSession: false } }
+);
+
+export async function saveImageToSupabase(imageUrl: string): Promise<string | null> {
   try {
-    const res = await fetch(imageUrl);
+    console.log("Downloading:", imageUrl);
 
-    if (!res.ok) {
-      console.log("Image download failed:", res.status);
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      console.error("Failed to download image:", response.status);
       return null;
     }
 
-    const buffer = Buffer.from(await res.arrayBuffer());
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const ext = imageUrl.split(".").pop()?.split("?")[0] || "jpg";
+    const filename = `products/${crypto.randomUUID()}.${ext}`;
 
-    const filename = `${crypto.randomUUID()}.jpg`;
-    const path = `products/${filename}`;
-
-    const { error } = await supabaseAdmin.storage
+    const { data, error } = await supabase.storage
       .from("social-temp")
-      .upload(path, buffer, {
-        contentType: "image/jpeg",
+      .upload(filename, buffer, {
+        contentType: `image/${ext}`,
+        upsert: false,
       });
 
     if (error) {
-      console.log("Supabase upload error:", error);
+      console.error("Supabase upload ERROR:", error);
       return null;
     }
 
-    return supabaseAdmin.storage
-      .from("social-temp")
-      .getPublicUrl(path).data.publicUrl;
+    const publicUrl =
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/social-temp/${data?.path}`;
 
-  } catch (err) {
-    console.log("saveImage error:", err);
+    console.log("Uploaded:", publicUrl);
+    return publicUrl;
+  } catch (e) {
+    console.error("saveImageToSupabase FAILED:", e);
     return null;
   }
 }

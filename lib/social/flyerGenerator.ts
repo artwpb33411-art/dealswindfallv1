@@ -14,11 +14,13 @@ registerFont(path.join(process.cwd(), "public/fonts/Inter-Bold.ttf"), {
 const WIDTH = 1080;
 const HEIGHT = 1350;
 
+// Format price
 function formatPrice(val: number | null) {
-  if (!val) return "$0.00";
+  if (val == null) return "$0.00";
   return `$${val.toFixed(2)}`;
 }
 
+// Emoji helper
 function getEmoji(percent: number) {
   if (percent >= 60) return "🔥🔥";
   if (percent >= 40) return "⚡";
@@ -26,6 +28,7 @@ function getEmoji(percent: number) {
   return "";
 }
 
+// Title wrap
 function wrapLines(ctx: any, text: string, maxWidth: number) {
   const words = text.split(" ");
   const lines: string[] = [];
@@ -33,7 +36,7 @@ function wrapLines(ctx: any, text: string, maxWidth: number) {
 
   for (let w of words) {
     const test = line + w + " ";
-    if (ctx.measureText(test).width > maxWidth && line !== "") {
+    if (ctx.measureText(test).width > maxWidth && line.length > 0) {
       lines.push(line.trim());
       line = w + " ";
     } else {
@@ -53,7 +56,7 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // Title
+  // TITLE
   ctx.fillStyle = "#111827";
   let fontSize = 60;
   let lines: string[] = [];
@@ -67,18 +70,19 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
 
   if (lines.length > 3) {
     lines = lines.slice(0, 3);
-    lines[2] += "...";
+    lines[2] = lines[2] + "...";
   }
 
   ctx.textAlign = "center";
   let y = 120;
   const lineHeight = fontSize + 10;
-  lines.forEach((line) => {
+
+  for (const line of lines) {
     ctx.fillText(line, WIDTH / 2, y);
     y += lineHeight;
-  });
+  }
 
-  // Product Image Box
+  // IMAGE BOX
   const imgTop = y + 40;
   const boxW = 900;
   const boxH = 600;
@@ -88,25 +92,36 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   ctx.roundRect(boxX, imgTop, boxW, boxH, 32);
   ctx.fill();
 
-  try {
-    const image = await loadImage(deal.image_link || "");
-    const ratio = Math.min(boxW / image.width, boxH / image.height);
-
-    const w = image.width * ratio;
-    const h = image.height * ratio;
-
-    const imgX = boxX + (boxW - w) / 2;
-    const imgY = imgTop + (boxH - h) / 2;
-
-    ctx.drawImage(image, imgX, imgY, w, h);
-  } catch (err) {
-    console.error("Flyer image load failed:", err);
+  // LOAD PRODUCT IMAGE
+try {
+  if (!deal.image_link) {
+    console.error("No product image — using fallback logo.");
   }
 
-  // Price Badge (green)
+  const safeImageUrl =
+    deal.image_link || "https://www.dealswindfall.com/dealswindfall-logoA.png";
+
+  console.log("Loading image:", safeImageUrl);
+
+  const image = await loadImage(safeImageUrl);
+
+  const ratio = Math.min(boxW / image.width, boxH / image.height);
+  const w = image.width * ratio;
+  const h = image.height * ratio;
+
+  const imgX = boxX + (boxW - w) / 2;
+  const imgY = imgTop + (boxH - h) / 2;
+
+  ctx.drawImage(image, imgX, imgY, w, h);
+} catch (err) {
+  console.error("Flyer image load failed:", err);
+}
+
+
+  // PRICE BADGE (bigger)
   const priceBoxY = imgTop + boxH + 60;
-  const badgeW = 420;
-  const badgeH = 160;
+  const badgeW = 520;     // wider
+  const badgeH = 200;     // taller
   const badgeX = (WIDTH - badgeW) / 2;
 
   ctx.fillStyle = "#2ecc71";
@@ -114,6 +129,7 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   ctx.fill();
 
   const price = formatPrice(deal.price);
+
   const percent =
     deal.percent_diff ??
     (deal.old_price && deal.price
@@ -123,27 +139,30 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   ctx.fillStyle = "#ffffff";
   ctx.textAlign = "center";
 
-  ctx.font = "700 64px Inter";
-  ctx.fillText(price, WIDTH / 2, priceBoxY + 80);
+  // Price text
+  ctx.font = "700 72px Inter";
+  ctx.fillText(price, WIDTH / 2, priceBoxY + 95);
 
-  ctx.font = "700 40px Inter";
-  ctx.fillText(`${percent}% OFF ${getEmoji(percent)}`, WIDTH / 2, priceBoxY + 130);
+  // Percent OFF text
+  ctx.font = "700 44px Inter";
+  const percentLabel = `${percent}% OFF ${getEmoji(percent)}`;
+  ctx.fillText(percentLabel, WIDTH / 2, priceBoxY + 155);
 
-  // Footer (logo + URL)
+  // FOOTER LOGO
   try {
     const logo = await loadImage("https://www.dealswindfall.com/dealswindfall-logoA.png");
-    const logoH = 80;
+    const logoH = 90;
     const logoW = (logo.width / logo.height) * logoH;
 
-    ctx.drawImage(logo, (WIDTH - logoW) / 2, HEIGHT - 190, logoW, logoH);
+    ctx.drawImage(logo, (WIDTH - logoW) / 2, HEIGHT - 210, logoW, logoH);
   } catch (err) {
-    console.error("Logo load error:", err);
+    console.error("Logo load failed:", err);
   }
 
-  ctx.font = "400 36px Inter";
+  // FOOTER URL
+  ctx.font = "400 38px Inter";
   ctx.fillStyle = "#6b7280";
-  ctx.textAlign = "center";
-  ctx.fillText("www.dealswindfall.com", WIDTH / 2, HEIGHT - 70);
+  ctx.fillText("www.dealswindfall.com", WIDTH / 2, HEIGHT - 100);
 
   return canvas.toBuffer("image/png");
 }
