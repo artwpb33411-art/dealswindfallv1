@@ -17,7 +17,7 @@ export async function generateFlyerSquare(deal: SelectedDeal): Promise<Buffer> {
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext("2d");
 
-  // Background gradient
+  // Background gradient (solid final export)
   const gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
   gradient.addColorStop(0, "#f7f9fc");
   gradient.addColorStop(1, "#eaf0f6");
@@ -29,26 +29,27 @@ export async function generateFlyerSquare(deal: SelectedDeal): Promise<Buffer> {
   let fontSize = 50;
   ctx.textAlign = "center";
 
-  while (fontSize >= 30) {
+  while (fontSize >= 26) {
     ctx.font = `700 ${fontSize}px Inter`;
     if (ctx.measureText(deal.title).width <= 900) break;
     fontSize -= 2;
   }
 
-  ctx.fillText(deal.title, WIDTH / 2, 110);
+  ctx.fillText(deal.title, WIDTH / 2, 120);
 
-  // Image zone
-  const boxW = 900;
-  const boxH = 520;
-  const boxX = 90;
-  const boxY = 150;
+  // Image card (must be fully opaque)
+  const cardW = 900;
+  const cardH = 520;
+  const cardX = 90;
+  const cardY = 160;
 
-  ctx.fillStyle = "rgba(255,255,255,0.7)";
-  ctx.roundRect(boxX, boxY, boxW, boxH, 40);
+  ctx.fillStyle = "#ffffff"; // SOLID white
+  ctx.roundRect(cardX, cardY, cardW, cardH, 40);
   ctx.fill();
 
   // Load product image
-  let imgUrl = deal.image_link || "https://www.dealswindfall.com/dealswindfall-logoA.png";
+  const imgUrl =
+    deal.image_link || "https://www.dealswindfall.com/dealswindfall-logoA.png";
   let img;
   try {
     img = await loadImage(imgUrl);
@@ -56,18 +57,19 @@ export async function generateFlyerSquare(deal: SelectedDeal): Promise<Buffer> {
     img = await loadImage("https://www.dealswindfall.com/dealswindfall-logoA.png");
   }
 
-  const ratio = Math.min(boxW / img.width, boxH / img.height);
-  const w = img.width * ratio;
-  const h = img.height * ratio;
-  ctx.drawImage(img, boxX + (boxW - w) / 2, boxY + (boxH - h) / 2, w, h);
+  const ratio = Math.min(cardW / img.width, cardH / img.height);
+  const newW = img.width * ratio;
+  const newH = img.height * ratio;
 
-  // Price badge
-  ctx.fillStyle = "rgba(34,197,94,0.9)";
+  ctx.drawImage(img, cardX + (cardW - newW) / 2, cardY + (cardH - newH) / 2, newW, newH);
+
+  // Price badge (SOLID colors only)
+  ctx.fillStyle = "#22c55e"; // green
   ctx.roundRect(240, 720, 600, 200, 40);
   ctx.fill();
 
   ctx.font = "700 72px Inter";
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = "#ffffff";
   ctx.fillText(`$${deal.price?.toFixed(2)}`, WIDTH / 2, 810);
 
   const percent =

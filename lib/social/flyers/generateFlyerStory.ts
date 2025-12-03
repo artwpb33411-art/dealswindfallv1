@@ -27,28 +27,29 @@ export async function generateFlyerStory(deal: SelectedDeal): Promise<Buffer> {
   // Title
   ctx.fillStyle = "#111827";
   let fontSize = 64;
+  ctx.textAlign = "center";
 
-  while (fontSize >= 40) {
+  while (fontSize >= 36) {
     ctx.font = `700 ${fontSize}px Inter`;
     if (ctx.measureText(deal.title).width <= 900) break;
     fontSize -= 3;
   }
 
-  ctx.textAlign = "center";
-  ctx.fillText(deal.title, WIDTH / 2, 160);
+  ctx.fillText(deal.title, WIDTH / 2, 175);
 
-  // Image card
+  // Image card (must be solid white)
   const cardW = 900;
   const cardH = 900;
   const cardX = 90;
-  const cardY = 240;
+  const cardY = 260;
 
-  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.fillStyle = "#ffffff"; // Solid white
   ctx.roundRect(cardX, cardY, cardW, cardH, 50);
   ctx.fill();
 
   // Load product image
-  let imgUrl = deal.image_link || "https://www.dealswindfall.com/dealswindfall-logoA.png";
+  const imgUrl =
+    deal.image_link || "https://www.dealswindfall.com/dealswindfall-logoA.png";
   let img;
   try {
     img = await loadImage(imgUrl);
@@ -57,26 +58,26 @@ export async function generateFlyerStory(deal: SelectedDeal): Promise<Buffer> {
   }
 
   const ratio = Math.min(cardW / img.width, cardH / img.height);
-  const w = img.width * ratio;
-  const h = img.height * ratio;
+  const newW = img.width * ratio;
+  const newH = img.height * ratio;
 
-  ctx.drawImage(img, cardX + (cardW - w) / 2, cardY + (cardH - h) / 2, w, h);
+  ctx.drawImage(img, cardX + (cardW - newW) / 2, cardY + (cardH - newH) / 2, newW, newH);
 
   // Price badge
   const badgeX = 150;
-  const badgeY = 1250;
+  const badgeY = 1270;
   const badgeW = 780;
   const badgeH = 260;
 
-  ctx.fillStyle = "rgba(34,197,94,0.92)";
+  ctx.fillStyle = "#22c55e"; // SOLID green
   ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 50);
   ctx.fill();
 
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = "#ffffff";
   ctx.textAlign = "center";
 
   ctx.font = "700 110px Inter";
-  ctx.fillText(`$${deal.price?.toFixed(2)}`, WIDTH / 2, badgeY + 140);
+  ctx.fillText(`$${deal.price?.toFixed(2)}`, WIDTH / 2, badgeY + 145);
 
   const percent =
     deal.percent_diff ??
@@ -85,7 +86,7 @@ export async function generateFlyerStory(deal: SelectedDeal): Promise<Buffer> {
       : 0);
 
   ctx.font = "700 52px Inter";
-  ctx.fillText(`${percent}% OFF`, WIDTH / 2, badgeY + 210);
+  ctx.fillText(`${percent}% OFF`, WIDTH / 2, badgeY + 220);
 
   return canvas.toBuffer("image/png");
 }
