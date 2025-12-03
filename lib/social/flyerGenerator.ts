@@ -2,7 +2,7 @@ import { createCanvas, loadImage, registerFont } from "canvas";
 import type { SelectedDeal } from "./types";
 import path from "path";
 
-// Fonts
+// Register fonts
 registerFont(path.join(process.cwd(), "public/fonts/Inter-Regular.ttf"), {
   family: "Inter",
 });
@@ -31,7 +31,7 @@ function wrapLines(ctx: any, text: string, maxWidth: number) {
   const lines: string[] = [];
   let line = "";
 
-  for (let w of words) {
+  for (const w of words) {
     const test = line + w + " ";
     if (ctx.measureText(test).width > maxWidth && line.length > 0) {
       lines.push(line.trim());
@@ -88,27 +88,18 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   const boxX = (WIDTH - boxW) / 2;
 
   // Card shadow
-  ctx.fillStyle = "rgba(0,0,0,0.08)";
-  ctx.roundRect(boxX + 6, imgTop + 6, boxW, boxH, 40);
-  ctx.fill();
-
-  // Card background
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  ctx.roundRect(boxX, imgTop, boxW, boxH, 40);
-  ctx.fill();
-
-  // Soft glow behind image (node-canvas safe)
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.18)";
-  ctx.shadowBlur = 55;
+  ctx.shadowColor = "rgba(0,0,0,0.15)";
+  ctx.shadowBlur = 50;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 20;
-  ctx.fillStyle = "rgba(255,255,255,0.001)";
-  ctx.roundRect(boxX + 40, imgTop + 40, boxW - 80, boxH - 80, 32);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.roundRect(boxX, imgTop, boxW, boxH, 40);
   ctx.fill();
   ctx.restore();
 
-  // LOAD PRODUCT IMAGE
+  // ---- PRODUCT IMAGE (ON TOP) ----
   const safeImageUrl =
     deal.image_link ||
     "https://www.dealswindfall.com/dealswindfall-logoA.png";
@@ -120,6 +111,7 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
     const ratio = Math.min(boxW / image.width, boxH / image.height);
     const w = image.width * ratio;
     const h = image.height * ratio;
+
     const imgX = boxX + (boxW - w) / 2;
     const imgY = imgTop + (boxH - h) / 2;
 
