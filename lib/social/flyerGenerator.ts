@@ -21,7 +21,7 @@ function formatPrice(val: number | null) {
   return `$${val.toFixed(2)}`;
 }
 
-function wrapLines(ctx: any, text: string, maxWidth: number) {
+function wrapLines(ctx: any, text: string, maxWidth: number, maxLines: number) {
   const words = text.split(" ");
   const lines: string[] = [];
   let line = "";
@@ -31,12 +31,17 @@ function wrapLines(ctx: any, text: string, maxWidth: number) {
     if (ctx.measureText(test).width > maxWidth && line.length > 0) {
       lines.push(line.trim());
       line = w + " ";
+      if (lines.length === maxLines) break;
     } else {
       line = test;
     }
   }
-
-  lines.push(line.trim());
+  if (lines.length < maxLines && line.trim()) {
+    lines.push(line.trim());
+  }
+  if (lines.length === maxLines) {
+    lines[maxLines - 1] = lines[maxLines - 1] + "...";
+  }
   return lines;
 }
 
@@ -44,33 +49,24 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext("2d");
 
-  //
-  // BACKGROUND (Old flyer style = pure white)
-  //
+  // Background
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  //
-  // TITLE (old flyer style)
-  //
+  // TITLE
   ctx.fillStyle = "#111827";
   let fontSize = 56;
   let lines: string[] = [];
 
   while (fontSize >= 34) {
     ctx.font = `700 ${fontSize}px Inter`;
-    lines = wrapLines(ctx, deal.title, 900);
+    lines = wrapLines(ctx, deal.title, 900, 2);
     if (lines.length <= 2) break;
     fontSize -= 2;
   }
 
-  if (lines.length > 2) {
-    lines = lines.slice(0, 2);
-    lines[1] += "...";
-  }
-
   ctx.textAlign = "center";
-  let y = 120;
+  let y = 130;
   const lineHeight = fontSize + 10;
 
   for (const line of lines) {
@@ -78,18 +74,18 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
     y += lineHeight;
   }
 
-  //
-  // PRODUCT IMAGE — center on white (NO green overlay)
-  //
+  // PRODUCT IMAGE
   const safeImageUrl =
     deal.image_link ||
     "https://www.dealswindfall.com/dealswindfall-logoA.png";
+
+  let imageBottom = y + 40;
 
   try {
     const image = await loadImage(safeImageUrl);
 
     const maxW = 900;
-    const maxH = 650;
+    const maxH = 550;
     const ratio = Math.min(maxW / image.width, maxH / image.height);
 
     const w = image.width * ratio;
@@ -99,23 +95,25 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
     const imgY = y + 40;
 
     ctx.drawImage(image, imgX, imgY, w, h);
-
-    y = imgY + h;
+    imageBottom = imgY + h;
   } catch (err) {
     console.error("❌ Flyer image load FAILED:", err);
-    y += 500; // keep layout spacing even if image fails
+    imageBottom = y + 300;
   }
 
-  //
-  // PRICE BADGE — old style yellow rounded rectangle
-  //
-  const badgeY = y + 80;
-  const badgeW = 650;
+  // PRICE BADGE — ensure safe spacing
   const badgeH = 190;
+  const footerReservedTop = HEIGHT - 260; // moved down
+  let badgeY = imageBottom + 80;
+  const maxBadgeY = footerReservedTop - badgeH;
+
+  if (badgeY > maxBadgeY) badgeY = maxBadgeY;
+
+  const badgeW = 650;
   const badgeX = (WIDTH - badgeW) / 2;
   const radius = 60;
 
-  ctx.fillStyle = "#facc15"; // bright yellow
+  ctx.fillStyle = "#facc15"; // yellow
   ctx.beginPath();
   ctx.moveTo(badgeX + radius, badgeY);
   ctx.lineTo(badgeX + badgeW - radius, badgeY);
@@ -145,14 +143,15 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
   ctx.fillStyle = "#ffffff";
 
   ctx.font = "700 80px Inter";
-  ctx.fillText(price, WIDTH / 2, badgeY + 100);
+  ctx.fillText(price, WIDTH / 2, badgeY + 105);
 
   ctx.font = "700 42px Inter";
-  ctx.fillText(`${percent}% OFF`, WIDTH / 2, badgeY + 155);
+  ctx.fillText(`${percent}% OFF`, WIDTH / 2, badgeY + 160);
 
-  //
-  // FOOTER — logo left, URL right
-  //
+  // FOOTER — moved lower so it NEVER overlaps
+  const footerY = HEIGHT - 150;
+
+  // Logo left
   try {
     const logo = await loadImage(
       "https://www.dealswindfall.com/dealswindfall-logoA.png"
@@ -160,15 +159,16 @@ export async function generateFlyer(deal: SelectedDeal): Promise<Buffer> {
     const logoH = 90;
     const logoW = (logo.width / logo.height) * logoH;
 
-    ctx.drawImage(logo, 80, HEIGHT - 200, logoW, logoH);
+    ctx.drawImage(logo, 80, footerY, logoW, logoH);
   } catch (err) {
     console.error("Footer logo failed:", err);
   }
 
+  // Website right
   ctx.textAlign = "right";
   ctx.font = "400 40px Inter";
   ctx.fillStyle = "#b91c1c";
-  ctx.fillText("www.dealswindfall.com", WIDTH - 80, HEIGHT - 80);
+  ctx.fillText("www.dealswindfall.com", WIDTH - 80, footerY + 65);
 
   return canvas.toBuffer("image/png");
 }
