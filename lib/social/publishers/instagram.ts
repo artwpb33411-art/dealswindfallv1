@@ -3,29 +3,42 @@ export async function publishToInstagram(caption: string, imageBase64: string) {
     const IG_ID = process.env.INSTAGRAM_BUSINESS_ID!;
     const TOKEN = process.env.INSTAGRAM_LONG_LIVED_TOKEN!;
 
-    // Upload base64 PNG to Facebook Graph as IG media
-    const buffer = Buffer.from(imageBase64, "base64");
+    const endpoint = `https://graph.facebook.com/v19.0/${IG_ID}/media`;
 
-    // Step 1 – upload image to Facebook Graph
-    const uploadRes = await fetch(
-      `https://graph.facebook.com/v19.0/${IG_ID}/media`,
-      {
-        method: "POST",
-        body: new URLSearchParams({
-          access_token: TOKEN,
-          caption,
-          image_base64: imageBase64
-        }),
-      }
-    );
+    const params = new URLSearchParams({
+      access_token: TOKEN,
+      caption,
+      image_base64: imageBase64,
+    });
 
-    const uploadJson = await uploadRes.json();
+    // Step 1 — Upload media to Graph API
+    let uploadRes = await fetch(endpoint, {
+      method: "POST",
+      body: params,
+    });
+
+    let uploadJson = await uploadRes.json();
+
+    // Retry upload if needed
     if (!uploadJson.id) {
-      console.error("IG UPLOAD ERROR:", uploadJson);
-      return uploadJson;
+      console.warn("⚠️ IG Upload failed, retrying...", uploadJson);
+
+      await new Promise((r) => setTimeout(r, 1500));
+
+      uploadRes = await fetch(endpoint, {
+        method: "POST",
+        body: params,
+      });
+
+      uploadJson = await uploadRes.json();
+
+      if (!uploadJson.id) {
+        console.error("❌ INSTAGRAM UPLOAD ERROR:", uploadJson);
+        return uploadJson;
+      }
     }
 
-    // Step 2 – publish it
+    // Step 2 — Publish media
     const publishRes = await fetch(
       `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
       {

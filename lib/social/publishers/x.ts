@@ -7,20 +7,42 @@ const client = new TwitterApi({
   accessSecret: process.env.X_ACCESS_TOKEN_SECRET!,
 });
 
-export async function publishToX(text: string, imageBase64: string) {
-  // media upload uses v1.1
- const mediaId = await client.v1.uploadMedia(
-  Buffer.from(imageBase64, "base64"),
-  {
-    mimeType: "image/png"
+// Helper: sanitize unicode text (X rejects some characters silently)
+function sanitizeForX(text: string) {
+  return text
+    .replace(/[^\x00-\x7F]+/g, "")         // remove emojis that break X
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Max X media upload is ~5 MB
+function ensureImageSize(base64: string) {
+  const buffer = Buffer.from(base64, "base64");
+  if (buffer.length > 5 * 1024 * 1024) {
+    throw new Error("Image too large for X (limit ~5MB). Use square flyer.");
   }
-);
+  return buffer;
+}
 
+export async function publishToX(caption: string, imageBase64: string) {
+  try {
+    const text = sanitizeForX(caption);
+    const buffer = ensureImageSize(imageBase64);
 
-  const tweet = await client.v2.tweet({
-    text,
-    media: { media_ids: [mediaId] },
-  });
+    // Upload media
+    const mediaId = await client.v1.uploadMedia(buffer, {
+      mimeType: "image/png",
+    });
 
-  return tweet;
+    // Post tweet
+    const tweet = await client.v2.tweet({
+      text,
+      media: { media_ids: [mediaId] },
+    });
+
+    return tweet;
+  } catch (err) {
+    console.error("❌ X PUBLISH ERROR:", err);
+    return { error: String(err) };
+  }
 }
