@@ -19,8 +19,9 @@ export async function pickDealFromLastHour(): Promise<SelectedDeal | null> {
     `)
     .gte("published_at", oneHourAgo)
     .neq("exclude_from_auto", true)
+    .in("store_name", ["Amazon", "Walmart"])   // ⭐ NEW FILTER ADDED
     .order("published_at", { ascending: false })
-    .limit(12);
+    .limit(20);  // increased slightly to get more choices
 
   if (error) {
     console.log("pickDealFromLastHour error:", error);
@@ -29,6 +30,7 @@ export async function pickDealFromLastHour(): Promise<SelectedDeal | null> {
 
   if (!data || data.length === 0) return null;
 
+  // Pick a random deal out of the filtered list
   const deal = data[Math.floor(Math.random() * data.length)];
 
   return {
